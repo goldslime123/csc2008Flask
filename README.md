@@ -8,4 +8,4 @@
 #### 5. Finally run your flask ```flask run```.
 
 # Notes:
-#### 1. There will be red markers on the html file. Do not worry! It is working fine! Its red because it is not a javascript thing.
+There will be red markers on the html file. Do not worry! It is working fine! Its red because it is not a javascript thing.
