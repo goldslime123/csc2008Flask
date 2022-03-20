@@ -22,14 +22,14 @@
         var lineChart = new Chart(ctx, {
             type: "line",
             data: {
-                labels: ["2015-Q1","2015-Q2","2015-Q3","2015-Q4","2016-Q1","2016-Q2","2016-Q3","2016-Q4","2017-Q1"],
+                labels: {{ labels | safe }},
                 datasets: [
 
 
                 // Electrical Tariff prices dataset
                     {
                         label: "Electrical Tariff Prices (SGD)",
-                        data: [23.29,20.87,22.41,20.35,19.5,17.68,19.27,19.13,20.2],
+                        data: {{ electricPrice | safe }},
                         fill: false,
                         backgroundColor: ((context) => {
                             const chart = context.chart
@@ -72,7 +72,7 @@
                 //Crude oil prices
                 {
                     label: "Crude Oil Prices in Thousands (SGD)",
-                    data: [25.6,25.6,25.6,25.6,27.9,27.9,27.9,27.9,25.6],
+                    data: {{ crudePrice | safe }},
                     fill: false,
                     backgroundColor: ((context) => {
                         const chart = context.chart
