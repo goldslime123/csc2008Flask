@@ -11,19 +11,51 @@
 <body>
     <h1>Welcome to FlaskBlog</h1>
     <h2>Electric Tarrif Prices</h2>
-    <canvas id="lineChart" width="900" height="400"></canvas>
+    <canvas id="lineChart" width="1200" height="500"></canvas>
     <script>
+        const pointX = 5; // this is the number where u want your line graph color to transition
+
         var ctx = document.getElementById("lineChart").getContext("2d");
+            
         var lineChart = new Chart(ctx, {
             type: "line",
             data: {
-                labels: {{ labels | safe }},
+                labels: ["2015-Q1","2015-Q2","2015-Q3","2015-Q4","2016-Q1","2016-Q2","2016-Q3","2016-Q4","2017-Q1"],
                 datasets: [
                     {
                         label: "Data points",
-                        data: {{ values | safe }},
+                        data: [23.29,20.87,22.41,20.35,19.5,17.68,19.27,19.13,20.2],
                         fill: false,
-                        borderColor: "rgb(75,192,192)",
+                        backgroundColor: ((context) => {
+                            const chart = context.chart
+                            const{ctx, chartArea, scales} = chart;
+                            if(!chartArea) {return null};
+                            return getGradient(ctx, chartArea, scales);
+                        }), 
+                        //This is coloring the line 
+                        borderColor: ((context) => {
+                            const chart = context.chart
+                            const{ctx, chartArea, scales} = chart;
+                            if(!chartArea) {return null};
+                            return getGradient(ctx, chartArea, scales);
+                        }),
+                        pointBorderWidth:0,
+                        pointBackgroundColor: (context => {
+                            const colors = [];
+                            //This is so you do not have 2 colors on a point
+                            for(let i = 0; i < context.chart.data.labels.length; i++){ 
+                                if(i <= pointX){
+                                    colors.push("rgba(255,26,104,1)"); // red color
+                                }else{
+                                    colors.push("rgba(75,192,192,1)"); // green color
+                                }
+                                
+                            }
+                            return colors;
+                        }),
+                        //This is for the linebackground if needed! but i took it out since there is more then one graph
+                        //fill: true,
+                        borderWidth: 2,
                         lineTension: 0.1
                     }
                 ]
@@ -32,6 +64,42 @@
             responsive: false
         }
        });
+
+       const config = {
+           type: "line",
+           options:{
+               scales:{
+                   y:{
+                       beginAtZero: true
+                   }
+               }
+           }
+       };
+
+       function getGradient(ctx, chartArea, scales){
+           const gradientBg = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+
+           //console.log(chartArea.width)
+           //console.log(scales.x._valueRange)
+           const xPointWidth = chartArea.width / scales.x._valueRange;
+           //console.log(xPointWidth)
+           const xPoint = xPointWidth / chartArea.width * pointX; //this number is where the color transition at
+           //console.log(xPoint)
+
+           
+
+           //xPoint Color left
+           gradientBg.addColorStop(0,"rgba(255,26,104,1)");
+           gradientBg.addColorStop(xPoint,"rgba(255,26,104,1)");
+
+           //xPoint Color Right
+           gradientBg.addColorStop(xPoint,"rgba(75,192,192,1)");
+           gradientBg.addColorStop(1,"rgba(75,192,192,1)");
+           return gradientBg;
+       }
+
+       
+
     </script>
 </body>
 

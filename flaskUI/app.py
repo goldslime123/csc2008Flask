@@ -7,6 +7,7 @@ IS_DEV = app.env == 'development'
 
 @app.route('/')
 def index():
+    #This is where we import our data from database
     data = [
         ("2015-Q1", 23.29),
         ("2015-Q2", 20.87),
