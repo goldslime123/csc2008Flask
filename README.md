@@ -12,9 +12,9 @@ There will be red markers on the html file. Do not worry! It is working fine! It
 
 
 # How to connect to maria DB and create table with csv data (hdb example):
-Reference link: 
-https://www.youtube.com/watch?v=3hXk9sXBgt8
-https://mariadb.com/resources/blog/how-to-connect-python-programs-to-mariadb/
+### Reference link: 
+- https://www.youtube.com/watch?v=3hXk9sXBgt8
+- https://mariadb.com/resources/blog/how-to-connect-python-programs-to-mariadb/
 
 #### 1. Download all the CSV files
 ![image](https://user-images.githubusercontent.com/53167249/161244397-4e1d454a-0758-47e2-bf76-fcaa697313af.png)
@@ -30,7 +30,7 @@ https://mariadb.com/resources/blog/how-to-connect-python-programs-to-mariadb/
 CREATE TABLE hdb(id int primary key, quarter varchar(255), premiseType varchar(255), averageElectricConsumption decimal(5,2), averageBill decimal(5,2));
 #### 6. Save the data in the CSV to the table in the database, retrieve the path of the specific CSV file and replace 'C:/CSC2008DATA/hdb.csv'
 ![image](https://user-images.githubusercontent.com/53167249/161248762-4fee558f-f8d9-477f-b2ab-94d21100fe5c.png)
-LOAD DATA LOCAL INFILE 'C:/CSC2008DATA/hdb.csv' INTO TABLE hdb FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (id, quarter, premiseType, averageElectricConsumption, averageBill);
+### LOAD DATA LOCAL INFILE 'C:/CSC2008DATA/hdb.csv' INTO TABLE hdb FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (id, quarter, premiseType, averageElectricConsumption, averageBill);
 #### 7. Connect to your mariaDB from python (is already inside the code)
 ![image](https://user-images.githubusercontent.com/53167249/161249150-a1a62190-130d-43ed-90b5-620c0e046472.png)
 #### 8. Execute the SQL statements using cursor (the line with the red mark is needed to convert the data receive to float)
