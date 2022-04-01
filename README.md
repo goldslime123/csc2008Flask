@@ -25,14 +25,14 @@ There will be red markers on the html file. Do not worry! It is working fine! It
 #### 4. Create a database to put all your CSV tables and go into the database (csvfiles)
 ![image](https://user-images.githubusercontent.com/53167249/161246312-e81f3cd0-6f93-46a1-9a55-20ec6a6ee707.png)
 #### 5. Then create necessary tables based on the csv files. One CSV file, one table.
+### CREATE TABLE hdb(id int primary key, quarter varchar(255), premiseType varchar(255), averageElectricConsumption decimal(5,2), averageBill decimal(5,2));
 ![image](https://user-images.githubusercontent.com/53167249/161246741-33be36ab-cc3a-4bfd-a14d-311793eed164.png)
 ![image](https://user-images.githubusercontent.com/53167249/161247930-00a604cd-6dfd-405e-9b9c-ed85b0fe909e.png)
-### CREATE TABLE hdb(id int primary key, quarter varchar(255), premiseType varchar(255), averageElectricConsumption decimal(5,2), averageBill decimal(5,2));
 - The first number in the decimal is the total number of digits and the second number is the number of digits behind the '.'
 - So for 236.34, it will be decimal(5,2)
 #### 6. Save the data in the CSV to the table in the database, retrieve the path of the specific CSV file and replace 'C:/CSC2008DATA/hdb.csv'
-![image](https://user-images.githubusercontent.com/53167249/161248762-4fee558f-f8d9-477f-b2ab-94d21100fe5c.png)
 ### LOAD DATA LOCAL INFILE 'C:/CSC2008DATA/hdb.csv' INTO TABLE hdb FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (id, quarter, premiseType, averageElectricConsumption, averageBill);
+![image](https://user-images.githubusercontent.com/53167249/161248762-4fee558f-f8d9-477f-b2ab-94d21100fe5c.png)
 #### 7. Connect to your mariaDB from python (is already inside the code)
 ![image](https://user-images.githubusercontent.com/53167249/161249150-a1a62190-130d-43ed-90b5-620c0e046472.png)
 #### 8. Execute the SQL statements using cursor (the line with the red mark is needed to convert the data receive to float)
