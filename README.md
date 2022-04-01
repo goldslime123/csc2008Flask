@@ -27,7 +27,7 @@ There will be red markers on the html file. Do not worry! It is working fine! It
 #### 5. Then create necessary tables based on the csv files. One CSV file, one table.
 ![image](https://user-images.githubusercontent.com/53167249/161246741-33be36ab-cc3a-4bfd-a14d-311793eed164.png)
 ![image](https://user-images.githubusercontent.com/53167249/161247930-00a604cd-6dfd-405e-9b9c-ed85b0fe909e.png)
-CREATE TABLE hdb(id int primary key, quarter varchar(255), premiseType varchar(255), averageElectricConsumption decimal(5,2), averageBill decimal(5,2));
+### CREATE TABLE hdb(id int primary key, quarter varchar(255), premiseType varchar(255), averageElectricConsumption decimal(5,2), averageBill decimal(5,2));
 #### 6. Save the data in the CSV to the table in the database, retrieve the path of the specific CSV file and replace 'C:/CSC2008DATA/hdb.csv'
 ![image](https://user-images.githubusercontent.com/53167249/161248762-4fee558f-f8d9-477f-b2ab-94d21100fe5c.png)
 ### LOAD DATA LOCAL INFILE 'C:/CSC2008DATA/hdb.csv' INTO TABLE hdb FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (id, quarter, premiseType, averageElectricConsumption, averageBill);
