@@ -9,14 +9,91 @@
 
   <body>
     <h1>Database Project</h1>
-    <h2>Relationship between crude oil and electric tarrif prices</h2>
-    <canvas id="crudeVStarrif" width="1200" height="500"></canvas>
-    <script>
-          // this is the number where u want your line graph color to transition
-          const pointX = 5;
-          const pointX2 = 5;
+    <select class="ddlHypList" name="ddlHypList">
+        <option value="Crude Oil">Crude Oil VS Electrical Tarrif</option>
+        <option value="Temperature">Temperature VS Electrical Tarrif</option>
+    </select>
+    <h2 class="selectedHyp"></h2>
 
-          var ctx = document.getElementById("crudeVStarrif").getContext("2d");
+    <!-- Graphcomparison using linear machine learning graph -->
+    <canvas id="graphChart1" width="1200" height="500"></canvas> 
+    <!-- Graph comparison using non-linear machine learning graph -->
+    <canvas id="graphChart2" width="1200" height="500"></canvas>
+    <script>
+        //Dropdownbox selected box methods to change label text
+       const selectedElement = document.querySelector('.ddlHypList');
+       selectedElement.addEventListener('change', hypData);
+    
+       function hypData(){
+           console.log(selectedElement.value);
+           const selectedHypLabel = selectedElement.value;
+           console.log(lineChart.data.datasets[1].label)
+           
+           if(selectedHypLabel == "Crude Oil"){
+               //crude oil data list
+               console.log(dataobj[0]);
+               //The first graph
+               lineChart.data.datasets[1].label = dataobj[0].label
+               lineChart.data.datasets[1].data = dataobj[0].data
+
+               //The second graph
+               lineChart2.data.datasets[1].label = dataobj[0].label
+               lineChart2.data.datasets[1].data = dataobj[0].data
+           }
+           else{
+               // temperature data list
+               console.log(dataobj[1]);
+               //The first graph
+               lineChart.data.datasets[1].label = dataobj[1].label
+               lineChart.data.datasets[1].data = dataobj[1].data
+
+               //The second graph
+               lineChart2.data.datasets[1].label = dataobj[1].label
+               lineChart2.data.datasets[1].data = dataobj[1].data
+           }
+           lineChart.update();
+           lineChart2.update();
+           const selectedHyp = document.querySelector(".selectedHyp");
+           selectedHyp.textContent = `${selectedElement.value} VS Electrical Tarrif`; // sub header title selected.
+       }
+       
+        //For dropdownbox selected hypothesis's data objects that contains the label and the data:
+        function changeData(index) {
+            chart.data.datasets.forEach(function(dataset) {
+              dataset.label = dataObj[index].label;
+              dataset.data = dataObj[index].data;
+            });
+        }
+
+       //Listing my datasets:
+       const dataobj = [
+        {
+            label: "Crude Oil Prices in Thousands (SGD)",
+            data: {{ crudePrice | safe }}
+        },
+        {
+            label: "Temperature in Degrees Celcius C",
+            data: {{ temperature | safe }}
+        }
+       ]
+      
+
+       /*
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       First graph for linear machine learning 
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       */
+          // this is the position of the data array where after this position, it is the predicted values
+          const firstGraphPointX1 = 5;
+          const firstGraphPointX2 = 5;
+          const decimals = 2 //decimal point for y axis (money)
+          
+
+          var ctx = document.getElementById("graphChart1").getContext("2d");
 
           var lineChart = new Chart(ctx, {
               type: "line",
@@ -34,21 +111,21 @@
                               const chart = context.chart
                               const{ctx, chartArea, scales} = chart;
                               if(!chartArea) {return null};
-                              return getGradient(ctx, chartArea, scales);
+                              return getGradient_FirstGraph(ctx, chartArea, scales);
                           }),
                           //This is coloring the line
                           borderColor: ((context) => {
                               const chart = context.chart
                               const{ctx, chartArea, scales} = chart;
                               if(!chartArea) {return null};
-                              return getGradient(ctx, chartArea, scales);
+                              return getGradient_FirstGraph(ctx, chartArea, scales);
                           }),
                           pointBorderWidth:0,
                           pointBackgroundColor: (context => {
                               const colors = [];
                               //This is so you do not have 2 colors on a point
                               for(let i = 0; i < context.chart.data.labels.length; i++){
-                                  if(i <= pointX){
+                                  if(i <= firstGraphPointX1){
                                       colors.push("rgba(255,26,104,1)"); // red color
                                   }
                                   //This is if you want after the xpoint to be another color
@@ -64,34 +141,34 @@
                           borderWidth: 2,
                           lineTension: 0.1,
                           segment: {
-                              borderDash: ctx => (pointX < ctx.p1DataIndex ? [5, 2] : undefined)
+                              borderDash: ctx => (firstGraphPointX1 < ctx.p1DataIndex ? [5, 2] : undefined)
                             }
                       },
 
                   //Crude oil prices
                   {
-                      label: "Crude Oil Prices in Thousands (SGD)",
-                      data: {{ crudePrice | safe }},
+                      label: dataobj[0].label,
+                      data: dataobj[0].data,
                       fill: false,
                       backgroundColor: ((context) => {
                           const chart = context.chart
                           const{ctx, chartArea, scales} = chart;
                           if(!chartArea) {return null};
-                          return getGradient2(ctx, chartArea, scales);
+                          return getGradient2_FirstGraph(ctx, chartArea, scales);
                       }),
                       //This is coloring the line
                       borderColor: ((context) => {
                           const chart = context.chart
                           const{ctx, chartArea, scales} = chart;
                           if(!chartArea) {return null};
-                          return getGradient2(ctx, chartArea, scales);
+                          return getGradient2_FirstGraph(ctx, chartArea, scales);
                       }),
                       pointBorderWidth:0,
                       pointBackgroundColor: (context => {
                           const colors = [];
                           //This is so you do not have 2 colors on a point
                           for(let i = 0; i < context.chart.data.labels.length; i++){
-                              if(i <= pointX2){
+                              if(i <= firstGraphPointX2){
                                   colors.push("rgba(60,82,96,1)"); // blue color
                               }
                               //This is if you want after the xpoint to be another color
@@ -106,7 +183,7 @@
                       borderWidth: 2,
                       lineTension: 0.1,
                       segment: {
-                          borderDash: ctx => (pointX2 < ctx.p1DataIndex ? [5, 2] : undefined)
+                          borderDash: ctx => (firstGraphPointX2 < ctx.p1DataIndex ? [5, 2] : undefined)
                         }
                   }
 
@@ -115,31 +192,39 @@
                   ]
              },
           options: {
-              responsive: false
+              responsive: false,
+              scales:{
+                  y:{
+                      title: {
+                          display:true,
+                          text: "Prices in SGD"
+                      },
+                      ticks:{
+                          callback: function(value, index, values){
+                              return '$' + value.toFixed(decimals);
+                          }
+                      }
+                  },
+                  x:{
+                      title:{
+                          display: true,
+                          text:"Time in 4 Quarters of a Year"
+                      }
+                  }
+              }
           }
          });
 
-         const config = {
-             type: "line",
-             intersect: false,
-             options:{
-                 scales:{
-                     y:{
-                         beginAtZero: false,
-                     }
-                 }
-             }
-         };
 
          //for the first graph
-         function getGradient(ctx, chartArea, scales){
+         function getGradient_FirstGraph(ctx, chartArea, scales){
              const gradientBg = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
 
              //console.log(chartArea.width)
              //console.log(scales.x._valueRange)
              const xPointWidth = chartArea.width / scales.x._valueRange;
              //console.log(xPointWidth)
-             const xPoint = xPointWidth / chartArea.width * pointX; //this number is where the color transition at
+             const xPoint = xPointWidth / chartArea.width * firstGraphPointX1; //this number is where the color transition at
              //console.log(xPoint)
 
 
@@ -159,14 +244,14 @@
          }
 
          //for the second graph
-         function getGradient2(ctx, chartArea, scales){
+         function getGradient2_FirstGraph(ctx, chartArea, scales){
           const gradientBg2 = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
 
           //console.log(chartArea.width)
           //console.log(scales.x._valueRange)
           const xPointWidth = chartArea.width / scales.x._valueRange;
           //console.log(xPointWidth)
-          const xPoint = xPointWidth / chartArea.width * pointX2; //this number is where the color transition at
+          const xPoint = xPointWidth / chartArea.width * firstGraphPointX2; //this number is where the color transition at
           //console.log(xPoint)
 
 
@@ -183,7 +268,208 @@
           gradientBg2.addColorStop(xPoint,"rgba(60,82,96,1)");
 
           return gradientBg2;
+
+        }
+
+
+
+        /*
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       Second graph for linear machine learning 
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       ---------------------------------------------------------------------------------------------------------------
+       */
+
+        // this is the position of the data array where after this position, it is the predicted values
+        const secondGraphPointX1 = 5;
+        const secondGraphPointX2 = 5;
+        
+
+        var ctx = document.getElementById("graphChart2").getContext("2d");
+
+        var lineChart2 = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: {{ labels | safe }},
+                datasets: [
+
+
+                // Electrical Tariff prices dataset
+                    {
+                        label: "Electrical Tariff Prices (SGD)",
+                        data: {{ electricPrice | safe }},
+                        fill: false,
+                        backgroundColor: ((context) => {
+                            const chart = context.chart
+                            const{ctx, chartArea, scales} = chart;
+                            if(!chartArea) {return null};
+                            return getGradient_SecondGraph(ctx, chartArea, scales);
+                        }),
+                        //This is coloring the line
+                        borderColor: ((context) => {
+                            const chart = context.chart
+                            const{ctx, chartArea, scales} = chart;
+                            if(!chartArea) {return null};
+                            return getGradient_SecondGraph(ctx, chartArea, scales);
+                        }),
+                        pointBorderWidth:0,
+                        pointBackgroundColor: (context => {
+                            const colors = [];
+                            //This is so you do not have 2 colors on a point
+                            for(let i = 0; i < context.chart.data.labels.length; i++){
+                                if(i <= secondGraphPointX1){
+                                    colors.push("rgba(255,26,104,1)"); // red color
+                                }
+                                //This is if you want after the xpoint to be another color
+                                /*else{
+                                    colors.push("rgba(75,192,192,1)"); // green color
+                                }*/
+
+                            }
+                            return colors;
+                        }),
+                        //This is for the linebackground if needed! but i took it out since there is more then one graph
+                        //fill: true,
+                        borderWidth: 2,
+                        lineTension: 0.1,
+                        segment: {
+                            borderDash: ctx => (secondGraphPointX1 < ctx.p1DataIndex ? [5, 2] : undefined)
+                          }
+                    },
+
+                //Crude oil prices
+                {
+                    label: dataobj[0].label,
+                    data: dataobj[0].data,
+                    fill: false,
+                    backgroundColor: ((context) => {
+                        const chart = context.chart
+                        const{ctx, chartArea, scales} = chart;
+                        if(!chartArea) {return null};
+                        return getGradient2_SecondGraph(ctx, chartArea, scales);
+                    }),
+                    //This is coloring the line
+                    borderColor: ((context) => {
+                        const chart = context.chart
+                        const{ctx, chartArea, scales} = chart;
+                        if(!chartArea) {return null};
+                        return getGradient2_SecondGraph(ctx, chartArea, scales);
+                    }),
+                    pointBorderWidth:0,
+                    pointBackgroundColor: (context => {
+                        const colors = [];
+                        //This is so you do not have 2 colors on a point
+                        for(let i = 0; i < context.chart.data.labels.length; i++){
+                            if(i <= secondGraphPointX2){
+                                colors.push("rgba(60,82,96,1)"); // blue color
+                            }
+                            //This is if you want after the xpoint to be another color
+                            /*else{
+                                colors.push("rgba(75,192,192,1)"); // green color
+                            }*/
+                        }
+                        return colors;
+                    }),
+                    //This is for the linebackground if needed! but i took it out since there is more then one graph
+                    //fill: true,
+                    borderWidth: 2,
+                    lineTension: 0.1,
+                    segment: {
+                        borderDash: ctx => (secondGraphPointX2 < ctx.p1DataIndex ? [5, 2] : undefined)
+                      }
+                }
+
+
+
+                ]
+           },
+        options: {
+            responsive: false,
+            scales:{
+                y:{
+                    title: {
+                        display:true,
+                        text: "Prices in SGD"
+                    },
+                    ticks:{
+                        callback: function(value, index, values){
+                            return '$' + value.toFixed(decimals);
+                        }
+                    }
+                },
+                x:{
+                    title:{
+                        display: true,
+                        text:"Time in 4 Quarters of a Year"
+                    }
+                }
+            }
+        }
+       });
+
+
+       //for the first graph
+       function getGradient_SecondGraph(ctx, chartArea, scales){
+           const gradientBg = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+
+           //console.log(chartArea.width)
+           //console.log(scales.x._valueRange)
+           const xPointWidth = chartArea.width / scales.x._valueRange;
+           //console.log(xPointWidth)
+           const xPoint = xPointWidth / chartArea.width * secondGraphPointX1; //this number is where the color transition at
+           //console.log(xPoint)
+
+
+
+           //xPoint Color left
+           gradientBg.addColorStop(0,"rgba(255,26,104,1)");
+           gradientBg.addColorStop(xPoint,"rgba(255,26,104,1)");
+
+           //xPoint Color Right
+           //blue color
+           //gradientBg.addColorStop(xPoint,"rgba(75,192,192,1)");
+           //gradientBg.addColorStop(1,"rgba(75,192,192,1)");
+           gradientBg.addColorStop(0,"rgba(255,26,104,1)");
+           gradientBg.addColorStop(xPoint,"rgba(255,26,104,1)");
+
+           return gradientBg;
+       }
+
+       //for the second graph
+       function getGradient2_SecondGraph(ctx, chartArea, scales){
+        const gradientBg2 = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+
+        //console.log(chartArea.width)
+        //console.log(scales.x._valueRange)
+        const xPointWidth = chartArea.width / scales.x._valueRange;
+        //console.log(xPointWidth)
+        const xPoint = xPointWidth / chartArea.width * secondGraphPointX2; //this number is where the color transition at
+        //console.log(xPoint)
+
+
+
+        //xPoint Color left
+        gradientBg2.addColorStop(0,"rgba(60,82,96,1)");
+        gradientBg2.addColorStop(xPoint,"rgba(60,82,96,1)");
+
+        //xPoint Color Right
+        //blue color
+        //gradientBg.addColorStop(xPoint,"rgba(75,192,192,1)");
+        //gradientBg.addColorStop(1,"rgba(75,192,192,1)");
+        gradientBg2.addColorStop(0,"rgba(60,82,96,1)");
+        gradientBg2.addColorStop(xPoint,"rgba(60,82,96,1)");
+
+        return gradientBg2;
+
       }
+
+
+
+        
+      
     </script>
   </body>
 </html>
