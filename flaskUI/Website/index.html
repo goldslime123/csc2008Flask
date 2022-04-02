@@ -5,22 +5,72 @@
     <meta name="viewport" content="width=device-width" , initial-scale="1.0" />
     <title>Sample chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+    <!-------------------------------------------------- CSS Below -------------------------------------------------->
+    <style>
+        .ddlHypList{
+            width: 400px;
+            padding: 8px 12px;
+            color: #333333;
+            background-color: #eeeeee;
+            border: 1px solid #dddddd;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .canvas-container{
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            padding: 10px;
+        }
+        .canvas-container > div{
+            background-color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+        }
+        #graphTitle{
+            font-size: 30px;
+            line-height: 50px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #graphChart1{
+            margin: 10px;
+            padding: 10px;
+        }
+        #graphChart2{
+            margin: 10px;
+            padding: 10px
+        }
+    </style>
   </head>
 
+  <!-------------------------------------------------- HTML Below -------------------------------------------------->
   <body>
     <h1>Database Project</h1>
     <select class="ddlHypList" name="ddlHypList">
+        <option hidden>Select an option</option>
         <option value="Crude Oil">Crude Oil VS Electrical Tarrif</option>
         <option value="Temperature">Temperature VS Electrical Tarrif</option>
     </select>
     <h2 class="selectedHyp"></h2>
 
-    <!-- Graphcomparison using linear machine learning graph -->
-    <canvas id="graphChart1" width="1200" height="500"></canvas> 
-    <!-- Graph comparison using non-linear machine learning graph -->
-    <canvas id="graphChart2" width="1200" height="500"></canvas>
+    <div class="canvas-container">
+        <!-- Graphcomparison using linear machine learning graph -->
+        <div id="graphTitle">Linear </div>
+        <div id="graphTitle">Non-Linear</div>
+        <canvas id="graphChart1" width="800" height="400"></canvas> 
+        <!-- Graph comparison using non-linear machine learning graph -->
+        
+        <canvas id="graphChart2" width="800" height="400"></canvas>
+    </div>
+
+    <!-------------------------------------------------- Javascript Below -------------------------------------------------->
     <script>
-        //Dropdownbox selected box methods to change label text
+
+
+        //Dropdownbox selected box methods to change label text and data values for charts
        const selectedElement = document.querySelector('.ddlHypList');
        selectedElement.addEventListener('change', hypData);
     
@@ -65,7 +115,7 @@
             });
         }
 
-       //Listing my datasets:
+       //Listing my datasets as an object:
        const dataobj = [
         {
             label: "Crude Oil Prices in Thousands (SGD)",
