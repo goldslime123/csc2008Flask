@@ -8,9 +8,13 @@
 
     <!-------------------------------------------------- CSS Below -------------------------------------------------->
     <style>
+        .container{
+            text-align: center;
+            justify-content: center;
+        }
         .ddlHypList{
             width: 400px;
-            padding: 8px 12px;
+            padding: 8px 20px;
             color: #333333;
             background-color: #eeeeee;
             border: 1px solid #dddddd;
@@ -47,12 +51,13 @@
   </head>
 
   <!-------------------------------------------------- HTML Below -------------------------------------------------->
-  <body>
+  <body class="container">
     <h1>Database Project</h1>
     <select class="ddlHypList" name="ddlHypList">
         <option hidden>Select an option</option>
         <option value="Crude Oil">Crude Oil VS Electrical Tarrif</option>
         <option value="Temperature">Temperature VS Electrical Tarrif</option>
+        <option value="Maintenance">Maintenance VS Electrical Tarrif</option>
     </select>
     <h2 class="selectedHyp"></h2>
 
@@ -78,6 +83,7 @@
            console.log(selectedElement.value);
            const selectedHypLabel = selectedElement.value;
            console.log(lineChart.data.datasets[1].label)
+
            
            if(selectedHypLabel == "Crude Oil"){
                //crude oil data list
@@ -90,7 +96,7 @@
                lineChart2.data.datasets[1].label = dataobj[0].label
                lineChart2.data.datasets[1].data = dataobj[0].data
            }
-           else{
+           else if(selectedHypLabel == "Temperature"){
                // temperature data list
                console.log(dataobj[1]);
                //The first graph
@@ -101,8 +107,21 @@
                lineChart2.data.datasets[1].label = dataobj[1].label
                lineChart2.data.datasets[1].data = dataobj[1].data
            }
+           else if(selectedHypLabel == "Maintenance"){
+               // Maintenance data list
+               console.log(dataobj[2]);
+               //The first graph
+               lineChart.data.datasets[1].label = dataobj[2].label
+               lineChart.data.datasets[1].data = dataobj[2].data
+
+               //The second graph
+               lineChart2.data.datasets[1].label = dataobj[2].label
+               lineChart2.data.datasets[1].data = dataobj[2].data
+           }
+           
            lineChart.update();
            lineChart2.update();
+           
            const selectedHyp = document.querySelector(".selectedHyp");
            selectedHyp.textContent = `${selectedElement.value} VS Electrical Tarrif`; // sub header title selected.
        }
@@ -124,6 +143,10 @@
         {
             label: "Temperature in Degrees Celcius C",
             data: {{ temperature | safe }}
+        },
+        {
+            label: "Maintenance in Millions (SGD)",
+            data: {{ maintenance | safe }}
         }
        ]
       
