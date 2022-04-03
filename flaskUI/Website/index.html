@@ -8,45 +8,45 @@
 
     <!-------------------------------------------------- CSS Below -------------------------------------------------->
     <style>
-        .container{
-            text-align: center;
-            justify-content: center;
-        }
-        .ddlHypList{
-            width: 400px;
-            padding: 8px 20px;
-            color: #333333;
-            background-color: #eeeeee;
-            border: 1px solid #dddddd;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .canvas-container{
-            display: grid;
-            grid-template-columns: auto auto;
-            gap: 10px;
-            padding: 10px;
-        }
-        .canvas-container > div{
-            background-color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            padding: 20px 0;
-            position: relative;
-        }
-        #graphTitle{
-            font-size: 30px;
-            line-height: 50px;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        #graphChart1{
-            margin: 10px;
-            padding: 10px;
-        }
-        #graphChart2{
-            margin: 10px;
-            padding: 10px
-        }
+      .container {
+        text-align: center;
+        justify-content: center;
+      }
+      .ddlHypList {
+        width: 400px;
+        padding: 8px 20px;
+        color: #333333;
+        background-color: #eeeeee;
+        border: 1px solid #dddddd;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .canvas-container {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 10px;
+        padding: 10px;
+      }
+      .canvas-container > div {
+        background-color: rgba(255, 255, 255, 0.8);
+        text-align: center;
+        padding: 20px 0;
+        position: relative;
+      }
+      #graphTitle {
+        font-size: 30px;
+        line-height: 50px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      #graphChart1 {
+        margin: 10px;
+        padding: 10px;
+      }
+      #graphChart2 {
+        margin: 10px;
+        padding: 10px;
+      }
     </style>
   </head>
 
@@ -54,21 +54,21 @@
   <body class="container">
     <h1>Database Project</h1>
     <select class="ddlHypList" name="ddlHypList">
-        <option hidden>Select an option</option>
-        <option value="Crude Oil">Crude Oil VS Electrical Tarrif</option>
-        <option value="Temperature">Temperature VS Electrical Tarrif</option>
-        <option value="Maintenance">Maintenance VS Electrical Tarrif</option>
+      <option hidden>Select an option</option>
+      <option value="Crude Oil">Crude Oil VS Electrical Tarrif</option>
+      <option value="Temperature">Temperature VS Electrical Tarrif</option>
+      <option value="Maintenance">Maintenance VS Electrical Tarrif</option>
     </select>
     <h2 class="selectedHyp"></h2>
 
     <div class="canvas-container">
-        <!-- Graphcomparison using linear machine learning graph -->
-        <div id="graphTitle">Linear </div>
-        <div id="graphTitle">Non-Linear</div>
-        <canvas id="graphChart1" width="800" height="400"></canvas> 
-        <!-- Graph comparison using non-linear machine learning graph -->
-        
-        <canvas id="graphChart2" width="800" height="400"></canvas>
+      <!-- Graphcomparison using linear machine learning graph -->
+      <div id="graphTitle">Linear</div>
+      <div id="graphTitle">Non-Linear</div>
+      <canvas id="graphChart1" width="800" height="400"></canvas>
+      <!-- Graph comparison using non-linear machine learning graph -->
+
+      <canvas id="graphChart2" width="800" height="400"></canvas>
     </div>
 
     <!-------------------------------------------------- Javascript Below -------------------------------------------------->
@@ -78,13 +78,13 @@
         //Dropdownbox selected box methods to change label text and data values for charts
        const selectedElement = document.querySelector('.ddlHypList');
        selectedElement.addEventListener('change', hypData);
-    
+
        function hypData(){
            console.log(selectedElement.value);
            const selectedHypLabel = selectedElement.value;
            console.log(lineChart.data.datasets[1].label)
 
-           
+
            if(selectedHypLabel == "Crude Oil"){
                //crude oil data list
                console.log(dataobj[0]);
@@ -118,14 +118,14 @@
                lineChart2.data.datasets[1].label = dataobj[2].label
                lineChart2.data.datasets[1].data = dataobj[2].data
            }
-           
+
            lineChart.update();
            lineChart2.update();
-           
+
            const selectedHyp = document.querySelector(".selectedHyp");
            selectedHyp.textContent = `${selectedElement.value} VS Electrical Tarrif`; // sub header title selected.
        }
-       
+
         //For dropdownbox selected hypothesis's data objects that contains the label and the data:
         function changeData(index) {
             chart.data.datasets.forEach(function(dataset) {
@@ -149,13 +149,13 @@
             data: {{ maintenance | safe }}
         }
        ]
-      
+
 
        /*
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
-       First graph for linear machine learning 
+       First graph for linear machine learning
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@
           const firstGraphPointX1 = 5;
           const firstGraphPointX2 = 5;
           const decimals = 2 //decimal point for y axis (money)
-          
+
 
           var ctx = document.getElementById("graphChart1").getContext("2d");
 
@@ -350,7 +350,7 @@
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
-       Second graph for linear machine learning 
+       Second graph for linear machine learning
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
        ---------------------------------------------------------------------------------------------------------------
@@ -359,7 +359,7 @@
         // this is the position of the data array where after this position, it is the predicted values
         const secondGraphPointX1 = 5;
         const secondGraphPointX2 = 5;
-        
+
 
         var ctx = document.getElementById("graphChart2").getContext("2d");
 
@@ -538,11 +538,6 @@
         return gradientBg2;
 
       }
-
-
-
-        
-      
     </script>
   </body>
 </html>
