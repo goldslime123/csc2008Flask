@@ -13,6 +13,7 @@ There will be red markers on the html file. Do not worry! It is working fine! It
 
 # How to connect to postgreSQL database:
 #### 1. Install psycopg2 in terminal
+- pip install psycopg2
 #### 2. Run flask
 
 # Tables in the database:
