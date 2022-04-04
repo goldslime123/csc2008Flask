@@ -85,22 +85,37 @@
     -->
 
     <div class="canvas-container">
-      <div id="graphTitle">Linear</div> <!--1-->
-      <div id="graphTitle">Non-Linear</div> <!--2-->
+      <div id="graphTitle">Linear</div>
+      <!--1-->
+      <div id="graphTitle">Non-Linear</div>
+      <!--2-->
 
       <!-- Graphcomparison using linear machine learning graph -->
-      <canvas id="graphChart1" width="800" height="400"></canvas> <!--3-->
+      <canvas id="graphChart1" width="800" height="400"></canvas>
+      <!--3-->
       <!-- Graph comparison using non-linear machine learning graph -->
-      <canvas id="graphChart2" width="800" height="400"></canvas> <!--4-->
+      <canvas id="graphChart2" width="800" height="400"></canvas>
+      <!--4-->
 
-      <img src="{{ temp_quarter_train }}"> <!--5-->
-
+      <!-- linear regression for temp -->
+      <!--5-->
+      <img src="{{ lr_temp_quarter_train }}" />
+      <!--6-->
+      <div></div>
+      <!--7-->
+      <img src="{{ lr_temp_quarter_test }}" />
+      <!--8-->
+      <div></div>
+      <!--9-->
+      <img src="{{ lr_temp_tariff_train }}" />
+      <!--10-->
+      <div></div>
+      <!--11-->
+      <img src="{{ lr_temp_tariff_test }}" />
     </div>
 
     <!-------------------------------------------------- Javascript Below -------------------------------------------------->
     <script>
-
-
         //Dropdownbox selected box methods to change label text and data values for charts
        const selectedElement = document.querySelector('.ddlHypList');
        selectedElement.addEventListener('change', hypData);
@@ -128,7 +143,6 @@
                //The first graph
                lineChart.data.datasets[1].label = dataobj[1].label
                lineChart.data.datasets[1].data = dataobj[1].data
-            
 
                //The second graph
                lineChart2.data.datasets[1].label = dataobj[1].label
@@ -170,7 +184,7 @@
         {
             label: "Temperature in Degrees Celcius C",
             data: {{ temperature | safe }}
-            
+
         },
         {
             label: "Maintenance in Millions (SGD)",

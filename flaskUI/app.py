@@ -22,18 +22,27 @@ app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
 
 #Images
-imageFolder = os.path.join('static','image')
+imageFolder = os.path.join('static', 'image')
 app.config['UPLOAD_FOLDER'] = imageFolder
+
+#Predict tariff based on tempeature
+predictedTemp = 0
+predictedTarriff_temp = 0
 
 
 @app.route('/')
 def index():
-    
-    temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quarter_train.png')
-    temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quarter_test.png')
-    temp_tarif_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_train.png')
-    temp_tarif_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_test.png')
-    
+    # linear regression training
+    LR_temperature()
+    # load images
+    lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
+                                         'lr_temp_quarter_train.png')
+    lr_temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'],
+                                        'lr_temp_quarter_test.png')
+    lr_temp_tariff_train = os.path.join(app.config['UPLOAD_FOLDER'],
+                                        'lr_temp_tariff_train.png')
+    lr_temp_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
+                                       'lr_temp_tariff_test.png')
 
     list = []
     conn = None
@@ -54,8 +63,6 @@ def index():
 
     # Get Cursor
     if conn is not None:
-        # linear regression training
-        LR_temperature()
 
         # show linear and non linear
         cur = conn.cursor()
@@ -68,8 +75,8 @@ def index():
 
         data = [(item[0], float(item[1]), float(item[2]), float(item[3]),
                  float(item[4])) for item in list]
-        for i in data:
-            print(i, file=sys.stderr)
+        # for i in data:
+        #     print(i, file=sys.stderr)
 
         #from database
         labels = [row[0] for row in data]
@@ -79,15 +86,18 @@ def index():
         electricPrice = [row[2] for row in data]
         crudePrice = [row[3] for row in data]
         maintenance = [row[4] for row in data]
-        return render_template("index.html",
-                               labels=labels,
-                               electricPrice=electricPrice,
-                               crudePrice=crudePrice,
-                               temperature=temperature,
-                               maintenance=maintenance,
-                               temp_quarter_train=temp_quarter_train)
-
-        
+        return render_template(
+            "index.html",
+            labels=labels,
+            electricPrice=electricPrice,
+            crudePrice=crudePrice,
+            temperature=temperature,
+            maintenance=maintenance,
+            lr_temp_quarter_train=lr_temp_quarter_train,
+            lr_temp_quarter_test=lr_temp_quarter_test,
+            lr_temp_tariff_train=lr_temp_tariff_train,
+            lr_temp_tariff_test=lr_temp_tariff_test,
+        )
 
     # # This is where we import our data from database
     # data = [
@@ -110,19 +120,43 @@ def index():
     # return render_template("index.html", labels=labels, electricPrice=electricPrice, crudePrice=crudePrice, temperature=temperature, maintenance=maintenance )
 
 
-
-#Predict tempeature
-predictedTemp = 0
-predictedTarriff_temp =0
 def LR_temperature():
-    # import data set
-    datasetTemp = pd.read_csv('csv/weather.csv')
-    XTemp = datasetTemp['quarter'].values.reshape(-1, 1)
-    yTemp = datasetTemp['temperature'].values.reshape(-1, 1)
+    # Connect to postgresql Platform
+    try:
+        conn = psycopg2.connect(
+            host="ec2-54-173-77-184.compute-1.amazonaws.com",
+            database="d2v75ijfptfl5f",
+            user="jkbetvbzvsivpk",
+            password=
+            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
 
-    datasetTariff = pd.read_csv('csv/tariff.csv')
-    XTariff = datasetTemp['temperature'].values.reshape(-1, 1)
-    yTariff = datasetTariff['tariff_per_kwh'].values.reshape(-1, 1)
+        print("Successfully connected", file=sys.stderr)
+
+    except Exception as error:
+        print("Error connecting to Postgres Platform: {}".format(error))
+
+    data = []
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT w.quarter, w.temperature, t.tariff_per_kwh FROM weather w, tariff t WHERE w.quarter=t.quarter;"
+    )
+
+    for i in cur:
+        data.append(i)
+        
+    df = pd.DataFrame(data) 
+            
+    # saving the dataframe 
+    df.to_csv('temp/temperature.csv',header=['quarter', 'temperature', 'tariff_per_kwh'], index=False)
+
+    # import data set
+    dataset= pd.read_csv('temp/temperature.csv')
+
+    XTemp = dataset['quarter'].values.reshape(-1, 1)
+    yTemp = dataset['temperature'].values.reshape(-1, 1)
+
+    XTariff = dataset['temperature'].values.reshape(-1, 1)
+    yTariff = dataset['tariff_per_kwh'].values.reshape(-1, 1)
 
     # split data set to training/test set 80% traning
     X_trainTemp, X_testTemp, y_trainTemp, y_testTemp = train_test_split(
@@ -141,11 +175,11 @@ def LR_temperature():
     # test data and see how accurately our algorithm predicts the percentage score.
     y_predTemp = regressorTemp.predict(X_testTemp)
     print('Mean Absolute Error:',
-            metrics.mean_absolute_error(y_testTemp, y_predTemp))
+          metrics.mean_absolute_error(y_testTemp, y_predTemp))
     print('Mean Squared Error:',
-            metrics.mean_squared_error(y_testTemp, y_predTemp))
+          metrics.mean_squared_error(y_testTemp, y_predTemp))
     print('Root Mean Squared Error:',
-            np.sqrt(metrics.mean_squared_error(y_testTemp, y_predTemp)))
+          np.sqrt(metrics.mean_squared_error(y_testTemp, y_predTemp)))
     # get intercept:
     print("y intercept: " + str(regressorTemp.intercept_))
     # get slope:
@@ -161,7 +195,7 @@ def LR_temperature():
     plt.title('Quarter vs Temperature (Training set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('../flaskUI/static/image/temp_quarter_train.png')
+    plt.savefig('../flaskUI/static/image/lr_temp_quarter_train.png')
     plt.close()
 
     #show test set
@@ -170,7 +204,7 @@ def LR_temperature():
     plt.title('Quarter vs Temperature (Test set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('../flaskUI/static/image/temp_quarter_test.png')
+    plt.savefig('../flaskUI/static/image/lr_temp_quarter_test.png')
     plt.close()
 
     #Predict Tariff
@@ -183,14 +217,13 @@ def LR_temperature():
           np.sqrt(metrics.mean_squared_error(y_testTariff, y_predTariff)))
 
     print("y intercept: " + str(regressorTariff.intercept_))
-    print("slope: " + str(regressorTariff.coef_)) 
+    print("slope: " + str(regressorTariff.coef_))
 
     global predictedTarriff_temp
-    predictedTarriff_temp = regressorTariff.intercept_ + (regressorTariff.coef_ *
-                                                    predictedTemp)
-    print("Predicted Tariff: 2022 Quarter 1: " + str(predictedTarriff_temp))  
+    predictedTarriff_temp = regressorTariff.intercept_ + (
+        regressorTariff.coef_ * predictedTemp)
+    print("Predicted Tariff: 2022 Quarter 1: " + str(predictedTarriff_temp))
 
-    
     plt.scatter(X_trainTariff, y_trainTariff, color='red')
     plt.plot(X_trainTariff,
              regressorTariff.predict(X_trainTariff),
@@ -198,7 +231,7 @@ def LR_temperature():
     plt.title('Temperature vs Tariff (Training set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('../flaskUI/static/image/temp_tariff_train.png')
+    plt.savefig('../flaskUI/static/image/lr_temp_tariff_train.png')
     plt.close()
 
     plt.scatter(X_testTariff, y_testTariff, color='red')
@@ -208,7 +241,7 @@ def LR_temperature():
     plt.title('Temperature vs Tariff (Test set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('../flaskUI/static/image/temp_tariff_test.png')
+    plt.savefig('../flaskUI/static/image/lr_temp_tariff_test.png')
     plt.close()
 
 
