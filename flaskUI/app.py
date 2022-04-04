@@ -29,8 +29,24 @@ app.config['UPLOAD_FOLDER'] = imageFolder
 predictedTemp = 0
 predictedTarriff_temp = 0
 
-
 @app.route('/')
+def home():
+    return render_template("home.html")
+
+@app.route('/temperature')
+def temperature():
+    return render_template("temperature.html")
+
+@app.route('/crudeoil')
+def crudeoil():
+    return render_template("crudeoil.html")
+
+@app.route('/maintenance')
+def maintenance():
+    return render_template("maintenance.html")
+
+
+@app.route('/chart')
 def index():
     # linear regression training
     LR_temperature()
