@@ -10,9 +10,13 @@ import sys
 
 #linear regression
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn import metrics
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 
 app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
@@ -20,7 +24,7 @@ IS_DEV = app.env == 'development'
 
 @app.route('/')
 def index():
-    
+
     list = []
     conn = None
 
@@ -40,7 +44,10 @@ def index():
 
     # Get Cursor
     if conn is not None:
+        # linear regression training
+        LR_temperature()
 
+        # show linear and non linear
         cur = conn.cursor()
         cur.execute(
             "SELECT w.quarter, w.temperature, t.tariff_per_kwh, c.price_per_barrel, m.cost FROM weather w, tariff t, crudeoil c, maintenance m WHERE w.quarter=c.quarter and  w.quarter=t.quarter and m.quarter=w.quarter;"
@@ -57,7 +64,7 @@ def index():
         #from database
         labels = [row[0] for row in data]
         labels.append('2022.1')
-    
+
         temperature = [row[1] for row in data]
 
         electricPrice = [row[2] for row in data]
@@ -69,9 +76,9 @@ def index():
                                crudePrice=crudePrice,
                                temperature=temperature,
                                maintenance=maintenance)
-        
 
         
+
     # # This is where we import our data from database
     # data = [
     #     ("2015-Q1", 23.29, 25.6, 27.4, 21.9),
@@ -93,7 +100,11 @@ def index():
     # return render_template("index.html", labels=labels, electricPrice=electricPrice, crudePrice=crudePrice, temperature=temperature, maintenance=maintenance )
 
 
-def linearRegressionTemperature():
+
+#Predict tempeature
+predictedTemp = 0
+predictedTarriff_temp =0
+def LR_temperature():
     # import data set
     datasetTemp = pd.read_csv('csv/weather.csv')
     XTemp = datasetTemp['quarter'].values.reshape(-1, 1)
@@ -102,40 +113,37 @@ def linearRegressionTemperature():
     datasetTariff = pd.read_csv('csv/tariff.csv')
     XTariff = datasetTemp['temperature'].values.reshape(-1, 1)
     yTariff = datasetTariff['tariff_per_kwh'].values.reshape(-1, 1)
+
     # split data set to training/test set 80% traning
-    from sklearn.model_selection import train_test_split
     X_trainTemp, X_testTemp, y_trainTemp, y_testTemp = train_test_split(
         XTemp, yTemp, test_size=0.2, random_state=0)
     X_trainTariff, X_testTariff, y_trainTariff, y_testTariff = train_test_split(
         XTariff, yTariff, test_size=0.2, random_state=0)
 
     # train training set
-    from sklearn.linear_model import LinearRegression
     regressorTemp = LinearRegression()
     regressorTemp.fit(X_trainTemp, y_trainTemp)
+
     regressorTariff = LinearRegression()
     regressorTariff.fit(X_trainTariff, y_trainTariff)
 
-    #Predict tempeature
-    #To retrieve the intercept:
-    print("y intercept: " + str(regressorTemp.intercept_))
-    #For retrieving the slope:
-    print("slope: " + str(regressorTemp.coef_))
-
-    # y = a+bx
+    #Predict Temperature
     # test data and see how accurately our algorithm predicts the percentage score.
     y_predTemp = regressorTemp.predict(X_testTemp)
-
-    # mae, msq, rmse
     print('Mean Absolute Error:',
-          metrics.mean_absolute_error(y_testTemp, y_predTemp))
+            metrics.mean_absolute_error(y_testTemp, y_predTemp))
     print('Mean Squared Error:',
-          metrics.mean_squared_error(y_testTemp, y_predTemp))
+            metrics.mean_squared_error(y_testTemp, y_predTemp))
     print('Root Mean Squared Error:',
-          np.sqrt(metrics.mean_squared_error(y_testTemp, y_predTemp)))
-
-    y = regressorTemp.intercept_ + (regressorTemp.coef_ * 2022.1)
-    print("Predicted Temperature: 2022 Quarter 1: " + str(y))
+            np.sqrt(metrics.mean_squared_error(y_testTemp, y_predTemp)))
+    # get intercept:
+    print("y intercept: " + str(regressorTemp.intercept_))
+    # get slope:
+    print("slope: " + str(regressorTemp.coef_))
+    # y = a+bx
+    global predictedTemp
+    predictedTemp = regressorTemp.intercept_ + (regressorTemp.coef_ * 2022.1)
+    print("Predicted Temperature: 2022 Quarter 1: " + str(predictedTemp))
 
     # show training set
     plt.scatter(X_trainTemp, y_trainTemp, color='red')
@@ -143,27 +151,20 @@ def linearRegressionTemperature():
     plt.title('Quarter vs Temperature (Training set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('image/temperature/temp_quarter_train.png')
+    plt.savefig('image/linear/temperature/temp_quarter_train.png')
+    plt.close()
 
-    # # show test set
+    #show test set
     plt.scatter(X_testTemp, y_testTemp, color='red')
     plt.plot(X_trainTemp, regressorTemp.predict(X_trainTemp), color='blue')
     plt.title('Quarter vs Temperature (Test set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('image/temperature/temp_quarter_test.png')
+    plt.savefig('image/linear/temperature/temp_quarter_test.png')
+    plt.close()
 
-    #Predict tariff
-    #To retrieve the intercept:
-    print("y intercept: " + str(regressorTariff.intercept_))
-    #For retrieving the slope:
-    print("slope: " + str(regressorTariff.coef_))
-
-    # y = a+bx
-    # test data and see how accurately our algorithm predicts the percentage score.
+    #Predict Tariff
     y_predTariff = regressorTariff.predict(X_testTariff)
-
-    # mae, msq, rmse
     print('Mean Absolute Error:',
           metrics.mean_absolute_error(y_testTariff, y_predTariff))
     print('Mean Squared Error:',
@@ -171,10 +172,15 @@ def linearRegressionTemperature():
     print('Root Mean Squared Error:',
           np.sqrt(metrics.mean_squared_error(y_testTariff, y_predTariff)))
 
-    y = regressorTariff.intercept_ + (regressorTariff.coef_ * y)
-    print("Predicted Tariff: 2022 Quarter 1: " + str(y))
+    print("y intercept: " + str(regressorTariff.intercept_))
+    print("slope: " + str(regressorTariff.coef_)) 
 
-    # show training set
+    global predictedTarriff_temp
+    predictedTarriff_temp = regressorTariff.intercept_ + (regressorTariff.coef_ *
+                                                    predictedTemp)
+    print("Predicted Tariff: 2022 Quarter 1: " + str(predictedTarriff_temp))  
+
+    
     plt.scatter(X_trainTariff, y_trainTariff, color='red')
     plt.plot(X_trainTariff,
              regressorTariff.predict(X_trainTariff),
@@ -182,17 +188,18 @@ def linearRegressionTemperature():
     plt.title('Temperature vs Tariff (Training set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('image/temperature/temp_tarif_train.png')
+    plt.savefig('image/linear/temperature/temp_tariff_train.png')
+    plt.close()
 
-    # show test set
     plt.scatter(X_testTariff, y_testTariff, color='red')
     plt.plot(X_trainTariff,
              regressorTariff.predict(X_trainTariff),
              color='blue')
-    plt.title('Temperature vs Tariff (Training set)')
+    plt.title('Temperature vs Tariff (Test set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('image/temperature/temp_tarif_test.png')
+    plt.savefig('image/linear/temperature/temp_tariff_test.png')
+    plt.close()
 
 
 if __name__ == 'main':
@@ -201,6 +208,3 @@ if __name__ == 'main':
     # HARD CODE since default is production
     os.environ['FLASK_ENV'] = 'development'
     app.run(debug=True)
-
-    
-
