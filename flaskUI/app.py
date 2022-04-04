@@ -29,8 +29,8 @@ app.config['UPLOAD_FOLDER'] = imageFolder
 @app.route('/')
 def index():
     
-    temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quater_train.png')
-    temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quater_test.png')
+    temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quarter_train.png')
+    temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quarter_test.png')
     temp_tarif_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_train.png')
     temp_tarif_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_test.png')
     
@@ -85,7 +85,7 @@ def index():
                                crudePrice=crudePrice,
                                temperature=temperature,
                                maintenance=maintenance,
-                               temp_tarif_test=temp_tarif_test)
+                               temp_quarter_train=temp_quarter_train)
 
         
 
@@ -161,7 +161,7 @@ def LR_temperature():
     plt.title('Quarter vs Temperature (Training set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('image/linear/temperature/temp_quarter_train.png')
+    plt.savefig('../flaskUI/static/image/temp_quarter_train.png')
     plt.close()
 
     #show test set
@@ -170,7 +170,7 @@ def LR_temperature():
     plt.title('Quarter vs Temperature (Test set)')
     plt.xlabel('Quarter')
     plt.ylabel('Temperature')
-    plt.savefig('image/linear/temperature/temp_quarter_test.png')
+    plt.savefig('../flaskUI/static/image/temp_quarter_test.png')
     plt.close()
 
     #Predict Tariff
@@ -198,7 +198,7 @@ def LR_temperature():
     plt.title('Temperature vs Tariff (Training set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('image/linear/temperature/temp_tariff_train.png')
+    plt.savefig('../flaskUI/static/image/temp_tariff_train.png')
     plt.close()
 
     plt.scatter(X_testTariff, y_testTariff, color='red')
@@ -208,7 +208,7 @@ def LR_temperature():
     plt.title('Temperature vs Tariff (Test set)')
     plt.xlabel('Temperature')
     plt.ylabel('Tariff')
-    plt.savefig('image/linear/temperature/temp_tariff_test.png')
+    plt.savefig('../flaskUI/static/image/temp_tariff_test.png')
     plt.close()
 
 
