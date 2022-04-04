@@ -35,7 +35,83 @@ def home():
 
 @app.route('/temperature')
 def temperature():
-    return render_template("temperature.html")
+    
+    list = []
+    conn = None
+    
+    # linear regression training
+    LR_temperature()
+    # load images
+    lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
+                                         'lr_temp_quarter_train.png')
+    lr_temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'],
+                                        'lr_temp_quarter_test.png')
+    lr_temp_tariff_train = os.path.join(app.config['UPLOAD_FOLDER'],
+                                        'lr_temp_tariff_train.png')
+    lr_temp_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
+                                       'lr_temp_tariff_test.png')
+    
+    # Connect to postgresql Platform
+    try:
+        conn = psycopg2.connect(
+            host="ec2-54-173-77-184.compute-1.amazonaws.com",
+            database="d2v75ijfptfl5f",
+            user="jkbetvbzvsivpk",
+            password=
+            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+
+        print("Successfully connected", file=sys.stderr)
+
+    except Exception as error:
+        print("Error connecting to Postgres Platform: {}".format(error))
+
+    # Get Cursor
+    if conn is not None:
+
+        # show linear and non linear
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT w.quarter, w.temperature, t.tariff_per_kwh, c.price_per_barrel, m.cost FROM weather w, tariff t, crudeoil c, maintenance m WHERE w.quarter=c.quarter and  w.quarter=t.quarter and m.quarter=w.quarter;"
+        )
+
+        for i in cur:
+            list.append(i)
+
+        linearData = [(item[0], float(item[1]), float(item[2])) for item in list]
+        
+        nonLinearData = [(item[0], float(item[1]), float(item[2])) for item in list]
+        # for i in data:
+        #     print(i, file=sys.stderr)
+
+        #Linear
+        l_labels = [row[0] for row in linearData]
+        l_labels.append('2022.1')
+        l_temperature = [row[1] for row in linearData]
+        l_electricPrice = [row[2] for row in linearData]
+   
+        
+        #Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_temperature = [row[1] for row in nonLinearData]
+        nl_electricPrice = [row[2] for row in nonLinearData]
+      
+        
+        return render_template(
+            "temperature.html",
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_temperature=l_temperature,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_temperature=nl_temperature,
+            lr_temp_quarter_train=lr_temp_quarter_train,
+            lr_temp_quarter_test=lr_temp_quarter_test,
+            lr_temp_tariff_train=lr_temp_tariff_train,
+            lr_temp_tariff_test=lr_temp_tariff_test,
+        )
+    
+    
 
 @app.route('/crudeoil')
 def crudeoil():
@@ -48,17 +124,7 @@ def maintenance():
 
 @app.route('/chart')
 def index():
-    # linear regression training
-    LR_temperature()
-    # load images
-    lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
-                                         'lr_temp_quarter_train.png')
-    lr_temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'],
-                                        'lr_temp_quarter_test.png')
-    lr_temp_tariff_train = os.path.join(app.config['UPLOAD_FOLDER'],
-                                        'lr_temp_tariff_train.png')
-    lr_temp_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
-                                       'lr_temp_tariff_test.png')
+    
 
     list = []
     conn = None
