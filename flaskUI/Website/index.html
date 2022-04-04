@@ -28,7 +28,7 @@
         padding: 10px;
       }
       .canvas-container > div {
-        background-color: rgba(255, 255, 255, 0.8);
+        /*background-color: rgba(255, 0, 0, 0.8);*/
         text-align: center;
         padding: 20px 0;
         position: relative;
@@ -81,37 +81,49 @@
         +---+---+
         | 9 | 10|
         +---+---+
+        | 11| 12|
+        +---+---+
         
     -->
 
     <div class="canvas-container">
-      <div id="graphTitle">Linear</div>
-      <!--1-->
-      <div id="graphTitle">Non-Linear</div>
-      <!--2-->
+        <!--1-->
+        <div id="graphTitle">Linear</div>
+        
+        <!--2-->
+        <div id="graphTitle">Non-Linear</div>
+      
+        <!--3-->
+        <!-- Graphcomparison using linear machine learning graph -->
+        <div><canvas id="graphChart1" width="800" height="400"></canvas></div>
+      
+        <!--4-->
+        <!-- Graph comparison using non-linear machine learning graph -->
+        <div><canvas id="graphChart2" width="800" height="400"></canvas></div>
 
-      <!-- Graphcomparison using linear machine learning graph -->
-      <canvas id="graphChart1" width="800" height="400"></canvas>
-      <!--3-->
-      <!-- Graph comparison using non-linear machine learning graph -->
-      <canvas id="graphChart2" width="800" height="400"></canvas>
-      <!--4-->
+        <!--5 Linear quarter train image-->
+        <div id="Linear_quarter_train_image"></div>
 
-      <!-- linear regression for temp -->
-      <!--5-->
-      <img src="{{ lr_temp_quarter_train }}" width="30" />
-      <!--6-->
-      <div></div>
-      <!--7-->
-      <img src="{{ lr_temp_quarter_test }}" />
-      <!--8-->
-      <div></div>
-      <!--9-->
-      <img src="{{ lr_temp_tariff_train }}" />
-      <!--10-->
-      <div></div>
-      <!--11-->
-      <img src="{{ lr_temp_tariff_test }}" />
+        <!--6 Non Linear quarter train image-->
+        <div id="NonLinear_quarter_train_image"></div>
+
+        <!--7 Linear quarter test image-->
+        <div id="Linear_quarter_test_image"></div>
+
+        <!--8 Non linear quarter test image-->
+        <div id="NonLinear_quarter_test_image"></div>
+
+        <!--9 Linear tarrif train image-->
+        <div id="Linear_tarrif_train_image"></div>
+
+        <!--10 Non Linear tarrif train image-->
+        <div id="NonLinear_tarrif_train_image"></div>
+
+        <!--11 Linear tarrif test image-->
+        <div id="Linear_tarrif_test_image"></div>
+
+        <!--12 Non-Linear tarrif test image-->
+        <div id="Linear_tarrif_test_image"></div>
     </div>
 
     <!-------------------------------------------------- Javascript Below -------------------------------------------------->
@@ -143,6 +155,7 @@
                //The first graph
                lineChart.data.datasets[1].label = dataobj[2].label
                lineChart.data.datasets[1].data = dataobj[2].data
+
 
                //The second graph
                lineChart2.data.datasets[1].label = dataobj[3].label
@@ -196,7 +209,8 @@
         {
             //Non-Linear
             label: "Temperature in Degrees Celcius C",
-            data: {{ nl_temperature | safe }}
+            data: {{ nl_temperature | safe }},
+            lr_temp_quarter_train_img: "{{ lr_temp_quarter_train }}"
 
         },
         {
