@@ -61,13 +61,39 @@
     </select>
     <h2 class="selectedHyp"></h2>
 
+    <!--
+
+        This is how the 2 x 5 grid is formated in the website.
+        Please follow this way and label the number in the "canvas-container".
+
+        L means "Linear" 
+        NL means "Non Linear"
+        +---+---+
+        | L | NL|
+        +---+---+
+        | 1 | 2 |
+        +---+---+
+        | 3 | 4 |
+        +---+---+
+        | 5 | 6 |
+        +---+---+
+        | 7 | 8 |
+        +---+---+
+        | 9 | 10|
+        +---+---+
+        
+    -->
+
     <div class="canvas-container">
+      <div id="graphTitle">Linear</div> <!--1-->
+      <div id="graphTitle">Non-Linear</div> <!--2-->
+
       <!-- Graphcomparison using linear machine learning graph -->
-      <div id="graphTitle">Linear</div>
-      <div id="graphTitle">Non-Linear</div>
-      <canvas id="graphChart1" width="800" height="400"></canvas>
+      <canvas id="graphChart1" width="800" height="400"></canvas> <!--3-->
       <!-- Graph comparison using non-linear machine learning graph -->
-      <canvas id="graphChart2" width="800" height="400"></canvas>
+      <canvas id="graphChart2" width="800" height="400"></canvas> <!--4-->
+
+      <img src="{{ temp_tarif_test }}"> <!--5-->
     </div>
 
     <!-------------------------------------------------- Javascript Below -------------------------------------------------->

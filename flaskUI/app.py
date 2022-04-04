@@ -21,9 +21,19 @@ from sklearn.linear_model import LinearRegression
 app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
 
+#Images
+imageFolder = os.path.join('static','pics')
+app.config['UPLOAD_FOLDER'] = imageFolder
+
 
 @app.route('/')
 def index():
+    
+    temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quater_train.png')
+    temp_quarter_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_quater_test.png')
+    temp_tarif_train = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_train.png')
+    temp_tarif_test = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_tariff_test.png')
+    
 
     list = []
     conn = None
@@ -75,7 +85,8 @@ def index():
                                electricPrice=electricPrice,
                                crudePrice=crudePrice,
                                temperature=temperature,
-                               maintenance=maintenance)
+                               maintenance=maintenance,
+                               temp_tarif_test=temp_tarif_test)
 
         
 
