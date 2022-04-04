@@ -2,11 +2,6 @@
 <html lang="en">
     <head>
         <style>
-            {
-                margin: 0;
-                padding: 0 px;
-                font-family: "Poppins",sans-serif;
-            }
             body
             {
                 display: flex;
@@ -14,6 +9,11 @@
                 align-items: center;
                 min-height: 100vh;
                 background: #f2f3f7;
+            }
+            .card-header{
+                justify-content: center;
+                align-items: center;
+                margin-left: 40px;
             }
             h1 {
                 font-weight: bold;
@@ -27,7 +27,7 @@
                 display:block;
                 margin-left: auto;
                 margin-right: auto;
-                width: 40%;
+                width: 80%;
             }
             p
             {
@@ -71,13 +71,17 @@
     </head>
     <body>
         <div class="container">
+            <img src="{{ gifImage }}" class="gifimage">
             <div class="header">
                 <h1>Database project</h1>    
                 <div class="card-header">
                     <a href="/temperature">Temperature</a>
                     <a href="/crudeoil">Crude Oil</a>
                     <a href="/maintenance">Maintenance</a>
-                </div>  
+                </div>
+                <p>Authors:
+                    <p>Aloysius, Brendan, Jeanie, Kendrick, Kenji</p>
+                </p>  
             </div>
         </div>
     </div>

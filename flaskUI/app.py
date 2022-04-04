@@ -1,3 +1,8 @@
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+import pandas as pd
+import matplotlib.pyplot as plt
 from flask import Flask, render_template
 import os
 
@@ -8,37 +13,43 @@ import psycopg2
 import mariadb
 import sys
 
-#linear regression
+# linear regression
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 
 app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
 
-#Images
+# Images
 imageFolder = os.path.join('static', 'image')
 app.config['UPLOAD_FOLDER'] = imageFolder
 
-#Predict tariff based on tempeature
+# Predict tariff based on tempeature
 predictedTemp = 0
 predictedTarriff_temp = 0
 
+#################################################################################
+############################ HomePage ###########################################
+#################################################################################
 @app.route('/')
 def home():
-    return render_template("home.html")
+    
+    #load gif image:
+    gifImage = os.path.join(app.config['UPLOAD_FOLDER'],
+                                         'LightBulb.gif')
+    
+    return render_template("home.html", gifImage=gifImage)
 
+#################################################################################
+############################ Temperature Page ###################################
+#################################################################################
 @app.route('/temperature')
 def temperature():
-    
+
     list = []
     conn = None
-    
+
     # linear regression training
     LR_temperature()
     # load images
@@ -50,15 +61,14 @@ def temperature():
                                         'lr_temp_tariff_train.png')
     lr_temp_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
                                        'lr_temp_tariff_test.png')
-    
+
     # Connect to postgresql Platform
     try:
         conn = psycopg2.connect(
             host="ec2-54-173-77-184.compute-1.amazonaws.com",
             database="d2v75ijfptfl5f",
             user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+            password="3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
 
         print("Successfully connected", file=sys.stderr)
 
@@ -77,26 +87,26 @@ def temperature():
         for i in cur:
             list.append(i)
 
-        linearData = [(item[0], float(item[1]), float(item[2])) for item in list]
-        
-        nonLinearData = [(item[0], float(item[1]), float(item[2])) for item in list]
+        linearData = [(item[0], float(item[1]), float(item[2]))
+                       for item in list]
+
+        nonLinearData = [(item[0], float(item[1]), float(item[2]))
+                          for item in list]
         # for i in data:
         #     print(i, file=sys.stderr)
 
-        #Linear
+        # Linear
         l_labels = [row[0] for row in linearData]
         l_labels.append('2022.1')
         l_temperature = [row[1] for row in linearData]
         l_electricPrice = [row[2] for row in linearData]
-   
-        
-        #Non Linear
+
+        # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
         nl_labels.append('2022.1')
         nl_temperature = [row[1] for row in nonLinearData]
         nl_electricPrice = [row[2] for row in nonLinearData]
-      
-        
+
         return render_template(
             "temperature.html",
             l_labels=l_labels,
@@ -110,11 +120,13 @@ def temperature():
             lr_temp_tariff_train=lr_temp_tariff_train,
             lr_temp_tariff_test=lr_temp_tariff_test,
         )
-    
 
+#################################################################################
+############################ Crude Oil Page #####################################
+#################################################################################
 @app.route('/crudeoil')
 def crudeoil():
-     
+
     list = []
     conn = None
 
@@ -124,8 +136,7 @@ def crudeoil():
             host="ec2-54-173-77-184.compute-1.amazonaws.com",
             database="d2v75ijfptfl5f",
             user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+            password="3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
 
         print("Successfully connected", file=sys.stderr)
 
@@ -144,25 +155,26 @@ def crudeoil():
         for i in cur:
             list.append(i)
 
-        linearData = [(item[0], float(item[2]), float(item[3])) for item in list]
-        
-        nonLinearData = [(item[0], float(item[2]), float(item[3])) for item in list]
+        linearData = [(item[0], float(item[2]), float(item[3]))
+                       for item in list]
+
+        nonLinearData = [(item[0], float(item[2]), float(item[3]))
+                          for item in list]
         # for i in data:
         #     print(i, file=sys.stderr)
 
-        #Linear
+        # Linear
         l_labels = [row[0] for row in linearData]
         l_labels.append('2022.1')
         l_electricPrice = [row[1] for row in linearData]
         l_crudePrice = [row[2] for row in linearData]
-        
-        #Non Linear
+
+        # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
         nl_labels.append('2022.1')
         nl_electricPrice = [row[1] for row in nonLinearData]
         nl_crudePrice = [row[2] for row in nonLinearData]
-   
-        
+
         return render_template(
             "crudeoil.html",
             l_labels=l_labels,
@@ -172,17 +184,13 @@ def crudeoil():
             nl_electricPrice=nl_electricPrice,
             nl_crudePrice=nl_crudePrice,
         )
-    
 
+#################################################################################
+############################ Maintenance Page ###################################
+#################################################################################
 @app.route('/maintenance')
 def maintenance():
-    return render_template("maintenance.html")
-
-
-@app.route('/chart')
-def index():
     
-
     list = []
     conn = None
 
@@ -212,69 +220,37 @@ def index():
         for i in cur:
             list.append(i)
 
-        linearData = [(item[0], float(item[1]), float(item[2]), float(item[3]),
-                 float(item[4])) for item in list]
+        linearData = [(item[0], float(item[2]), float(item[4])) for item in list]
         
-        nonLinearData = [(item[0], float(item[1]), float(item[2]), float(item[3]),
-                 float(item[4])) for item in list]
+        nonLinearData = [(item[0], float(item[2]), float(item[4])) for item in list]
         # for i in data:
         #     print(i, file=sys.stderr)
 
-        #Linear
+        # Linear
         l_labels = [row[0] for row in linearData]
         l_labels.append('2022.1')
-        l_temperature = [row[1] for row in linearData]
-        l_electricPrice = [row[2] for row in linearData]
-        l_crudePrice = [row[3] for row in linearData]
-        l_maintenance = [row[4] for row in linearData]
+        l_electricPrice = [row[1] for row in linearData]
+        l_maintenance = [row[2] for row in linearData]
         
-        #Non Linear
+        # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
         nl_labels.append('2022.1')
-        nl_temperature = [row[1] for row in nonLinearData]
-        nl_electricPrice = [row[2] for row in nonLinearData]
-        nl_crudePrice = [row[3] for row in nonLinearData]
-        nl_maintenance = [row[4] for row in nonLinearData]
+        nl_electricPrice = [row[1] for row in nonLinearData]
+        nl_maintenance = [row[2] for row in nonLinearData]
         
         return render_template(
-            "index.html",
+            "maintenance.html",
             l_labels=l_labels,
             l_electricPrice=l_electricPrice,
-            l_crudePrice=l_crudePrice,
-            l_temperature=l_temperature,
             l_maintenance=l_maintenance,
             nl_labels=nl_labels,
             nl_electricPrice=nl_electricPrice,
-            nl_crudePrice=nl_crudePrice,
-            nl_temperature=nl_temperature,
             nl_maintenance=nl_maintenance,
-            lr_temp_quarter_train=lr_temp_quarter_train,
-            lr_temp_quarter_test=lr_temp_quarter_test,
-            lr_temp_tariff_train=lr_temp_tariff_train,
-            lr_temp_tariff_test=lr_temp_tariff_test,
         )
 
-    # # This is where we import our data from database
-    # data = [
-    #     ("2015-Q1", 23.29, 25.6, 27.4, 21.9),
-    #     ("2015-Q2", 20.87, 25.6, 28.8, 21.9),
-    #     ("2015-Q3", 22.41, 25.6, 28.7, 21.9),
-    #     ("2015-Q4", 20.35, 27.9, 28.1, 21.9),
-    #     ("2016-Q1", 19.5, 27.9, 28.4, 24.4),
-    #     ("2016-Q2", 17.68, 27.9, 29.1, 24.4),
-    #     ("2016-Q3", 19.28, 27.9, 27.7, 24.4),
-    #     ("2016-Q4", 19.13, 27.9, 27.1, 24.4),
-    #     ("2017-Q1", 20.2, 24.2, 28.3, 24.9),
-    # ]
-
-    # labels = [row[0] for row in data]
-    # electricPrice = [row[1] for row in data]
-    # crudePrice = [row[2] for row in data]
-    # temperature = [row[3] for row in data]
-    # maintenance = [row[4] for row in data]
-    # return render_template("index.html", labels=labels, electricPrice=electricPrice, crudePrice=crudePrice, temperature=temperature, maintenance=maintenance )
-
-
+#################################################################################
+############################ Linear ML Functions ################################
+#################################################################################
 def LR_temperature():
     # Connect to postgresql Platform
     try:
@@ -326,7 +302,7 @@ def LR_temperature():
     regressorTariff = LinearRegression()
     regressorTariff.fit(X_trainTariff, y_trainTariff)
 
-    #Predict Temperature
+    # Predict Temperature
     # test data and see how accurately our algorithm predicts the percentage score.
     y_predTemp = regressorTemp.predict(X_testTemp)
     print('Mean Absolute Error:',
@@ -353,7 +329,7 @@ def LR_temperature():
     plt.savefig('../flaskUI/static/image/lr_temp_quarter_train.png')
     plt.close()
 
-    #show test set
+    # show test set
     plt.scatter(X_testTemp, y_testTemp, color='red')
     plt.plot(X_trainTemp, regressorTemp.predict(X_trainTemp), color='blue')
     plt.title('Quarter vs Temperature (Test set)')
@@ -362,7 +338,7 @@ def LR_temperature():
     plt.savefig('../flaskUI/static/image/lr_temp_quarter_test.png')
     plt.close()
 
-    #Predict Tariff
+    # Predict Tariff
     y_predTariff = regressorTariff.predict(X_testTariff)
     print('Mean Absolute Error:',
           metrics.mean_absolute_error(y_testTariff, y_predTariff))
