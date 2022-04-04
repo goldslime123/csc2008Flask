@@ -22,7 +22,7 @@ app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
 
 #Images
-imageFolder = os.path.join('static','pics')
+imageFolder = os.path.join('static','image')
 app.config['UPLOAD_FOLDER'] = imageFolder
 
 
@@ -76,7 +76,6 @@ def index():
         labels.append('2022.1')
 
         temperature = [row[1] for row in data]
-
         electricPrice = [row[2] for row in data]
         crudePrice = [row[3] for row in data]
         maintenance = [row[4] for row in data]
