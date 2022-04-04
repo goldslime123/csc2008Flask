@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn import metrics
+import base64
+from io import BytesIO
 
 
 # import data set
@@ -46,18 +48,19 @@ print("Predicted Temperature: 2022 Quarter 1: " + str(y))
 # show training set
 plt.scatter(X_trainTemp, y_trainTemp, color='red')
 plt.plot(X_trainTemp, regressorTemp.predict(X_trainTemp), color='blue')
-plt.title('quarter vs temperature (Training set)')
-plt.xlabel('quarter')
+plt.title('Quarter vs Temperature (Training set)')
+plt.xlabel('Quarter')
 plt.ylabel('temp')
 plt.show()
 
+
 # # show test set
-plt.scatter(X_testTemp, y_testTemp, color='red')
-plt.plot(X_trainTemp, regressorTemp.predict(X_trainTemp), color='blue')
-plt.title('quarter vs temperature (test set)')
-plt.xlabel('quarter')
-plt.ylabel('temp')
-plt.show()
+# plt.scatter(X_testTemp, y_testTemp, color='red')
+# plt.plot(X_trainTemp, regressorTemp.predict(X_trainTemp), color='blue')
+# plt.title('quarter vs temperature (test set)')
+# plt.xlabel('quarter')
+# plt.ylabel('temp')
+# plt.show()
 
 #Predict tariff
 #To retrieve the intercept:
@@ -78,18 +81,19 @@ print('Root Mean Squared Error:',
 y = regressorTariff.intercept_ + (regressorTariff.coef_* y)
 print("Predicted Tariff: 2022 Quarter 1: " + str(y))
 
-# show training set
-plt.scatter(X_trainTariff, y_trainTariff, color='red')
-plt.plot(X_trainTariff, regressorTariff.predict(X_trainTariff), color='blue')
-plt.title('temp vs tariff (Training set)')
-plt.xlabel('temp')
-plt.ylabel('tariff')
-plt.show()
+# # show training set
+# plt.scatter(X_trainTariff, y_trainTariff, color='red')
+# plt.plot(X_trainTariff, regressorTariff.predict(X_trainTariff), color='blue')
+# plt.title('temp vs tariff (Training set)')
+# plt.xlabel('temp')
+# plt.ylabel('tariff')
+# plt.show()
 
-# # show test set
-plt.scatter(X_testTariff, y_testTariff, color='red')
-plt.plot(X_trainTariff, regressorTariff.predict(X_trainTariff), color='blue')
-plt.title('temp vs tariff (Test set)')
-plt.xlabel('temp')
-plt.ylabel('tariff')
-plt.show()
+
+# # # show test set
+# plt.scatter(X_testTariff, y_testTariff, color='red')
+# plt.plot(X_trainTariff, regressorTariff.predict(X_trainTariff), color='blue')
+# plt.title('temp vs tariff (Test set)')
+# plt.xlabel('temp')
+# plt.ylabel('tariff')
+# plt.show()

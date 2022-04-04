@@ -67,7 +67,7 @@
       <div id="graphTitle">Non-Linear</div>
       <canvas id="graphChart1" width="800" height="400"></canvas>
       <!-- Graph comparison using non-linear machine learning graph -->
-
+      <img src="flaskUI/image/temperature/temp_quarter_test.png" width='42' height='42'/>
       <canvas id="graphChart2" width="800" height="400"></canvas>
     </div>
 
@@ -102,6 +102,7 @@
                //The first graph
                lineChart.data.datasets[1].label = dataobj[1].label
                lineChart.data.datasets[1].data = dataobj[1].data
+            
 
                //The second graph
                lineChart2.data.datasets[1].label = dataobj[1].label
@@ -143,6 +144,7 @@
         {
             label: "Temperature in Degrees Celcius C",
             data: {{ temperature | safe }}
+            
         },
         {
             label: "Maintenance in Millions (SGD)",
@@ -299,8 +301,6 @@
              //console.log(xPointWidth)
              const xPoint = xPointWidth / chartArea.width * firstGraphPointX1; //this number is where the color transition at
              //console.log(xPoint)
-
-
 
              //xPoint Color left
              gradientBg.addColorStop(0,"rgba(255,26,104,1)");
