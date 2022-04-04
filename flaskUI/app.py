@@ -111,11 +111,68 @@ def temperature():
             lr_temp_tariff_test=lr_temp_tariff_test,
         )
     
-    
 
 @app.route('/crudeoil')
 def crudeoil():
-    return render_template("crudeoil.html")
+     
+    list = []
+    conn = None
+
+    # Connect to postgresql Platform
+    try:
+        conn = psycopg2.connect(
+            host="ec2-54-173-77-184.compute-1.amazonaws.com",
+            database="d2v75ijfptfl5f",
+            user="jkbetvbzvsivpk",
+            password=
+            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+
+        print("Successfully connected", file=sys.stderr)
+
+    except Exception as error:
+        print("Error connecting to Postgres Platform: {}".format(error))
+
+    # Get Cursor
+    if conn is not None:
+
+        # show linear and non linear
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT w.quarter, w.temperature, t.tariff_per_kwh, c.price_per_barrel, m.cost FROM weather w, tariff t, crudeoil c, maintenance m WHERE w.quarter=c.quarter and  w.quarter=t.quarter and m.quarter=w.quarter;"
+        )
+
+        for i in cur:
+            list.append(i)
+
+        linearData = [(item[0], float(item[2]), float(item[3])) for item in list]
+        
+        nonLinearData = [(item[0], float(item[2]), float(item[3])) for item in list]
+        # for i in data:
+        #     print(i, file=sys.stderr)
+
+        #Linear
+        l_labels = [row[0] for row in linearData]
+        l_labels.append('2022.1')
+        l_electricPrice = [row[1] for row in linearData]
+        l_crudePrice = [row[2] for row in linearData]
+        
+        #Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_electricPrice = [row[1] for row in nonLinearData]
+        nl_crudePrice = [row[2] for row in nonLinearData]
+   
+        
+        return render_template(
+            "crudeoil.html",
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_crudePrice=l_crudePrice,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_crudePrice=nl_crudePrice,
+        )
+    
 
 @app.route('/maintenance')
 def maintenance():
