@@ -99,7 +99,7 @@
 
       <!-- linear regression for temp -->
       <!--5-->
-      <img src="{{ lr_temp_quarter_train }}" />
+      <img src="{{ lr_temp_quarter_train }}" width="30" />
       <!--6-->
       <div></div>
       <!--7-->
@@ -128,36 +128,36 @@
 
            if(selectedHypLabel == "Crude Oil"){
                //crude oil data list
-               console.log(dataobj[0]);
+               //console.log(dataobj[0]);
                //The first graph
                lineChart.data.datasets[1].label = dataobj[0].label
                lineChart.data.datasets[1].data = dataobj[0].data
 
                //The second graph
-               lineChart2.data.datasets[1].label = dataobj[0].label
-               lineChart2.data.datasets[1].data = dataobj[0].data
-           }
-           else if(selectedHypLabel == "Temperature"){
-               // temperature data list
-               console.log(dataobj[1]);
-               //The first graph
-               lineChart.data.datasets[1].label = dataobj[1].label
-               lineChart.data.datasets[1].data = dataobj[1].data
-
-               //The second graph
                lineChart2.data.datasets[1].label = dataobj[1].label
                lineChart2.data.datasets[1].data = dataobj[1].data
            }
-           else if(selectedHypLabel == "Maintenance"){
-               // Maintenance data list
-               console.log(dataobj[2]);
+           else if(selectedHypLabel == "Temperature"){
+               // temperature data list
+               //console.log(dataobj[1]);
                //The first graph
                lineChart.data.datasets[1].label = dataobj[2].label
                lineChart.data.datasets[1].data = dataobj[2].data
 
                //The second graph
-               lineChart2.data.datasets[1].label = dataobj[2].label
-               lineChart2.data.datasets[1].data = dataobj[2].data
+               lineChart2.data.datasets[1].label = dataobj[3].label
+               lineChart2.data.datasets[1].data = dataobj[3].data
+           }
+           else if(selectedHypLabel == "Maintenance"){
+               // Maintenance data list
+               //console.log(dataobj[2]);
+               //The first graph
+               lineChart.data.datasets[1].label = dataobj[4].label
+               lineChart.data.datasets[1].data = dataobj[4].data
+
+               //The second graph
+               lineChart2.data.datasets[1].label = dataobj[5].label
+               lineChart2.data.datasets[1].data = dataobj[5].data
            }
 
            lineChart.update();
@@ -178,17 +178,36 @@
        //Listing my datasets as an object:
        const dataobj = [
         {
+            //Linear
             label: "Crude Oil Prices in Thousands (SGD)",
-            data: {{ crudePrice | safe }}
+            data: {{ l_crudePrice | safe }}
         },
         {
+            //Non-Linear
+            label: "Crude Oil Prices in Thousands (SGD)",
+            data: {{ nl_crudePrice | safe }}
+        },
+        {
+            //Linear
             label: "Temperature in Degrees Celcius C",
-            data: {{ temperature | safe }}
+            data: {{ l_temperature | safe }}
 
         },
         {
+            //Non-Linear
+            label: "Temperature in Degrees Celcius C",
+            data: {{ nl_temperature | safe }}
+
+        },
+        {
+            //Linear
             label: "Maintenance in Millions (SGD)",
-            data: {{ maintenance | safe }}
+            data: {{ l_maintenance | safe }}
+        },
+        {
+            //Non-Linear
+            label: "Maintenance in Millions (SGD)",
+            data: {{ nl_maintenance | safe }}
         }
        ]
 
@@ -213,14 +232,14 @@
           var lineChart = new Chart(ctx, {
               type: "line",
               data: {
-                  labels: {{ labels | safe }},
+                  labels: {{ l_labels | safe }},
                   datasets: [
 
 
                   // Electrical Tariff prices dataset
                       {
                           label: "Electrical Tariff Prices (SGD)",
-                          data: {{ electricPrice | safe }},
+                          data: {{ l_electricPrice | safe }},
                           fill: false,
                           backgroundColor: ((context) => {
                               const chart = context.chart
@@ -406,14 +425,14 @@
         var lineChart2 = new Chart(ctx, {
             type: "line",
             data: {
-                labels: {{ labels | safe }},
+                labels: {{ nl_labels | safe }},
                 datasets: [
 
 
                 // Electrical Tariff prices dataset
                     {
                         label: "Electrical Tariff Prices (SGD)",
-                        data: {{ electricPrice | safe }},
+                        data: {{ nl_electricPrice | safe }},
                         fill: false,
                         backgroundColor: ((context) => {
                             const chart = context.chart

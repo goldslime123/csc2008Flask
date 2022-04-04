@@ -73,26 +73,42 @@ def index():
         for i in cur:
             list.append(i)
 
-        data = [(item[0], float(item[1]), float(item[2]), float(item[3]),
+        linearData = [(item[0], float(item[1]), float(item[2]), float(item[3]),
+                 float(item[4])) for item in list]
+        
+        nonLinearData = [(item[0], float(item[1]), float(item[2]), float(item[3]),
                  float(item[4])) for item in list]
         # for i in data:
         #     print(i, file=sys.stderr)
 
-        #from database
-        labels = [row[0] for row in data]
-        labels.append('2022.1')
-
-        temperature = [row[1] for row in data]
-        electricPrice = [row[2] for row in data]
-        crudePrice = [row[3] for row in data]
-        maintenance = [row[4] for row in data]
+        #Linear
+        l_labels = [row[0] for row in linearData]
+        l_labels.append('2022.1')
+        l_temperature = [row[1] for row in linearData]
+        l_electricPrice = [row[2] for row in linearData]
+        l_crudePrice = [row[3] for row in linearData]
+        l_maintenance = [row[4] for row in linearData]
+        
+        #Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_temperature = [row[1] for row in nonLinearData]
+        nl_electricPrice = [row[2] for row in nonLinearData]
+        nl_crudePrice = [row[3] for row in nonLinearData]
+        nl_maintenance = [row[4] for row in nonLinearData]
+        
         return render_template(
             "index.html",
-            labels=labels,
-            electricPrice=electricPrice,
-            crudePrice=crudePrice,
-            temperature=temperature,
-            maintenance=maintenance,
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_crudePrice=l_crudePrice,
+            l_temperature=l_temperature,
+            l_maintenance=l_maintenance,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_crudePrice=nl_crudePrice,
+            nl_temperature=nl_temperature,
+            nl_maintenance=nl_maintenance,
             lr_temp_quarter_train=lr_temp_quarter_train,
             lr_temp_quarter_test=lr_temp_quarter_test,
             lr_temp_tariff_train=lr_temp_tariff_train,
