@@ -9,10 +9,6 @@ import os
 # postgres
 import psycopg2
 
-# MariaDB Imports
-import mariadb
-import sys
-
 # linear regression
 import numpy as np
 import matplotlib
