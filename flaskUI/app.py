@@ -25,9 +25,12 @@ IS_DEV = app.env == 'development'
 imageFolder = os.path.join('static', 'image')
 app.config['UPLOAD_FOLDER'] = imageFolder
 
+#year
+years = [2022.1, 2022.2, 2022.3,2022.4,2023.1,2023.2,2023.3,2023.4]
+
 # Predict tariff based on tempeature
-predictedTemp = 0
-predictedTarriff_temp = 0
+linearResultPredictedTemp =[]
+linearResultPredictedTarriff=[]
 
 #################################################################################
 ############################ HomePage ###########################################
@@ -51,7 +54,7 @@ def temperature():
     conn = None
 
     # linear regression training
-    LR_temperature()
+    lr_temperature()
     # load images
     lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
                                          'lr_temp_quarter_train.png')
@@ -97,9 +100,22 @@ def temperature():
 
         # Linear
         l_labels = [row[0] for row in linearData]
-        l_labels.append('2022.1')
+        # add years 
+        for x in years:
+            l_labels.append(x)
         l_temperature = [row[1] for row in linearData]
+        temp=[]
+        for x in linearResultPredictedTemp:
+            temp.append(np.round(x,2))
+        for x in temp:
+            l_temperature.append(x)
         l_electricPrice = [row[2] for row in linearData]
+        temp1=[]
+        for x in linearResultPredictedTarriff:
+            temp1.append(np.round(x,2))
+        for x in temp1:
+            l_electricPrice.append(x)
+        
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
@@ -251,7 +267,7 @@ def maintenance():
 #################################################################################
 ############################ Linear ML Functions ################################
 #################################################################################
-def LR_temperature():
+def lr_temperature():
     # Connect to postgresql Platform
     try:
         conn = psycopg2.connect(
@@ -291,9 +307,9 @@ def LR_temperature():
 
     # split data set to training/test set 80% traning
     X_trainTemp, X_testTemp, y_trainTemp, y_testTemp = train_test_split(
-        XTemp, yTemp, test_size=0.2, random_state=0)
+        XTemp, yTemp, test_size=0.4, random_state=0)
     X_trainTariff, X_testTariff, y_trainTariff, y_testTariff = train_test_split(
-        XTariff, yTariff, test_size=0.2, random_state=0)
+        XTariff, yTariff, test_size=0.4, random_state=0)
 
     # train training set
     regressorTemp = LinearRegression()
@@ -316,9 +332,18 @@ def LR_temperature():
     # get slope:
     print("slope: " + str(regressorTemp.coef_))
     # y = a+bx
-    global predictedTemp
-    predictedTemp = regressorTemp.intercept_ + (regressorTemp.coef_ * 2022.1)
-    print("Predicted Temperature: 2022 Quarter 1: " + str(predictedTemp))
+    global linearResultPredictedTemp 
+    
+    # for x in years:
+    #     predictedTemp = regressorTemp.intercept_ + (regressorTemp.coef_ * x)
+    #     predictedTemp = np.round(predictedTemp,2)
+    #     linearResultPredictedTemp.append(predictedTemp)
+
+    # print(linearResultPredictedTemp)
+
+    # pd.DataFrame({'Actual': y_testTemp.flatten(), 'Predicted': y_predTemp.flatten()})
+
+    linearResultPredictedTemp = y_predTemp.flatten()
 
     # show training set
     plt.scatter(X_trainTemp, y_trainTemp, color='red')
@@ -350,10 +375,15 @@ def LR_temperature():
     print("y intercept: " + str(regressorTariff.intercept_))
     print("slope: " + str(regressorTariff.coef_))
 
-    global predictedTarriff_temp
-    predictedTarriff_temp = regressorTariff.intercept_ + (
-        regressorTariff.coef_ * predictedTemp)
-    print("Predicted Tariff: 2022 Quarter 1: " + str(predictedTarriff_temp))
+    global linearResultPredictedTarriff 
+    linearResultPredictedTarriff = y_predTariff.flatten()
+    # for x in linearResultPredictedTemp:
+    #     predictedTariffTemp = regressorTariff.intercept_ + (
+    #         regressorTariff.coef_ * x)
+    #     predictedTariffTemp = np.round(predictedTariffTemp,2)
+    #     linearResultPredictedTarriff.append(predictedTariffTemp)
+    # print("Predicted Tariff: 2022 Quarter 1: " + str(predictedTariffTemp))
+
 
     plt.scatter(X_trainTariff, y_trainTariff, color='red')
     plt.plot(X_trainTariff,
@@ -381,4 +411,4 @@ if __name__ == 'main':
     assert os.path.exists('.env')  # for other environment variables...
     # HARD CODE since default is production
     os.environ['FLASK_ENV'] = 'development'
-    app.run(debug=True)
+    app.run(hostdebug=True)
