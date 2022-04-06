@@ -1,8 +1,3 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn import metrics
-import pandas as pd
-import matplotlib.pyplot as plt
 from flask import Flask, render_template
 import os
 
@@ -15,11 +10,17 @@ import sys
 
 #Mongodb
 from pymongo import MongoClient
+import auth
 
 # linear regression
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+import pandas as pd
+import matplotlib.pyplot as plt
 
 app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
@@ -43,6 +44,24 @@ linearResultPredictedTarriffMain = []
 linearResultPredictedCrude = []
 linearResultPredictedTarriffCrude = []
 
+# postgres
+conn = None
+# mongo
+conn2 = None
+
+try:
+    # Connect to postgresql Platform
+    # conn = psycopg2.connect(host=auth.host,
+    #                         database=auth.database,
+    #                         user=auth.user,
+    #                         password=auth.password)
+
+    # Connect to mongodb Platform
+    conn2 = MongoClient(auth.connMongo)
+
+except Exception as error:
+    print("Error connecting to Database Platform: {}".format(error))
+
 
 #################################################################################
 ############################ HomePage ###########################################
@@ -62,10 +81,11 @@ def home():
 @app.route('/temperature')
 def temperature():
     list = []
-    conn = None
-
+    list2 = []
+    global conn, conn2
     # linear regression training
     lr_temperature()
+
     # load images
     lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
                                          'lr_temp_quarter_train.png')
@@ -75,30 +95,113 @@ def temperature():
                                         'lr_temp_tariff_train.png')
     lr_temp_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
                                        'lr_temp_tariff_test.png')
+    # mongo
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        templist = []
+        tariffList = []
+        pricePerBarrelList = []
+        mainCostList = []
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colMaintenance = db["maintenance"]
+        colTariff = db["tariff"]
+        colWeather = db["weather"]
 
-    # Connect to postgresql Platform
-    try:
-        conn = MongoClient('mongodb://user:password@notjyzh.duckdns.org:27017/?authSource=test', 27017)
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({
+            'quarter': {
+                '$gt': '0'
+            },
+            'price_per_barrel': {
+                '$gt': '0'
+            }
+        })
+        for document in cursorCrudeOil:
+            pricePerBarrelList.append(float(document['price_per_barrel']))
+            quarterList.append(float(document['quarter']))
 
-    except Exception as error:
-        print("Error connecting to Mongodb Platform: {}".format(error))
+        # cursor for temp
+        cursorTemp = colWeather.find({'temperature': {'$gt': '0'}})
+        for document in cursorTemp:
+            templist.append(float(document['temperature']))
 
-    # Get Cursor
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        # cursor for maintanence
+        cursorMain = colMaintenance.find({'cost': {'$gt': '0'}})
+        for document in cursorMain:
+            mainCostList.append(float(document['cost']))
+
+        for x in range(0, 21):
+            tuple = (quarterList[x], templist[x], tariffList[x],
+                     pricePerBarrelList[x], mainCostList[x])
+            list2.append(tuple)
+
+        linearData = [(item[0], float(item[1]), float(item[2]))
+                      for item in list2]
+        nonLinearData = [(item[0], float(item[1]), float(item[2]))
+                         for item in list2]
+
+        # Linear
+        l_labels = [row[0] for row in linearData]
+        # add years
+        for x in years:
+            l_labels.append(x)
+
+        l_temperature = [row[1] for row in linearData]
+        # add predicted temp
+        temp = []
+        for x in linearResultPredictedTemp:
+            temp.append(np.round(x, 2))
+        for x in temp:
+            l_temperature.append(x)
+
+        l_electricPrice = [row[2] for row in linearData]
+        # add predicted tariff
+        temp1 = []
+        for x in linearResultPredictedTarriffTemp:
+            temp1.append(np.round(x, 2))
+        for x in temp1:
+            l_electricPrice.append(x)
+
+        # Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_temperature = [row[1] for row in nonLinearData]
+        nl_electricPrice = [row[2] for row in nonLinearData]
+
+        return render_template(
+            "temperature.html",
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_temperature=l_temperature,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_temperature=nl_temperature,
+
+            # images
+            lr_temp_quarter_train=lr_temp_quarter_train,
+            lr_temp_quarter_test=lr_temp_quarter_test,
+            lr_temp_tariff_train=lr_temp_tariff_train,
+            lr_temp_tariff_test=lr_temp_tariff_test,
+        )
+
+    # postgres
     if conn is not None:
-        db = conn["kenji2008"]
-        collectionCrudeOil = db["crudeoil"]
         # show linear and non linear
-        # cur = client.cursor()
-        # cur.execute(
-        #     "SELECT w.quarter, w.temperature, t.tariff_per_kwh, c.price_per_barrel, m.cost FROM weather w, tariff t, crudeoil c, maintenance m WHERE w.quarter=c.quarter and  w.quarter=t.quarter and m.quarter=w.quarter;"
-        # )
-
-        
-
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT w.quarter, w.temperature, t.tariff_per_kwh, c.price_per_barrel, m.cost FROM weather w, tariff t, crudeoil c, maintenance m WHERE w.quarter=c.quarter and  w.quarter=t.quarter and m.quarter=w.quarter;"
+        )
         for i in cur:
             list.append(i)
-
-        conn.close()
 
         linearData = [(item[0], float(item[1]), float(item[2]))
                       for item in list]
@@ -158,10 +261,9 @@ def temperature():
 #################################################################################
 @app.route('/maintenance')
 def maintenance():
-
     list = []
-    conn = None
-
+    list2 = []
+    global conn, conn2
     # linear regression training
     lr_maintenance()
 
@@ -175,21 +277,104 @@ def maintenance():
     lr_main_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
                                        'lr_main_tariff_test.png')
 
-    # Connect to postgresql Platform
-    try:
-        conn = psycopg2.connect(
-            host="ec2-54-173-77-184.compute-1.amazonaws.com",
-            database="d2v75ijfptfl5f",
-            user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+    # mongo
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        templist = []
+        tariffList = []
+        pricePerBarrelList = []
+        mainCostList = []
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colMaintenance = db["maintenance"]
+        colTariff = db["tariff"]
+        colWeather = db["weather"]
 
-        print("Successfully connected", file=sys.stderr)
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({
+            'quarter': {
+                '$gt': '0'
+            },
+            'price_per_barrel': {
+                '$gt': '0'
+            }
+        })
+        for document in cursorCrudeOil:
+            pricePerBarrelList.append(float(document['price_per_barrel']))
+            quarterList.append(float(document['quarter']))
 
-    except Exception as error:
-        print("Error connecting to Postgres Platform: {}".format(error))
+        # cursor for temp
+        cursorTemp = colWeather.find({'temperature': {'$gt': '0'}})
+        for document in cursorTemp:
+            templist.append(float(document['temperature']))
 
-    # Get Cursor
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        # cursor for maintanence
+        cursorMain = colMaintenance.find({'cost': {'$gt': '0'}})
+        for document in cursorMain:
+            mainCostList.append(float(document['cost']))
+
+        for x in range(0, 21):
+            tuple = (quarterList[x], templist[x], tariffList[x],
+                     pricePerBarrelList[x], mainCostList[x])
+            list2.append(tuple)
+
+        linearData = [(item[0], float(item[1]), float(item[2]))
+                      for item in list2]
+        nonLinearData = [(item[0], float(item[1]), float(item[2]))
+                         for item in list2]
+
+        # Linear
+        l_labels = [row[0] for row in linearData]
+        # add years
+        for x in years:
+            l_labels.append(x)
+
+        l_maintenance = [row[1] for row in linearData]
+        # add predicted maintenance
+        temp = []
+        for x in linearResultPredictedMain:
+            temp.append(np.round(x, 2))
+        for x in temp:
+            l_maintenance.append(x)
+
+        l_electricPrice = [row[2] for row in linearData]
+        # add predicted tariff
+        temp1 = []
+        for x in linearResultPredictedTarriffMain:
+            temp1.append(np.round(x, 2))
+        for x in temp1:
+            l_electricPrice.append(x)
+
+        # Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_electricPrice = [row[1] for row in nonLinearData]
+        nl_maintenance = [row[2] for row in nonLinearData]
+
+        return render_template(
+            "maintenance.html",
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_maintenance=l_maintenance,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_maintenance=nl_maintenance,
+            #images
+            lr_main_quarter_train=lr_main_quarter_train,
+            lr_main_quarter_test=lr_main_quarter_test,
+            lr_main_tariff_train=lr_main_tariff_train,
+            lr_main_tariff_test=lr_main_tariff_test,
+        )
+
+    # postgres
     if conn is not None:
 
         # show linear and non linear
@@ -200,8 +385,6 @@ def maintenance():
 
         for i in cur:
             list.append(i)
-
-        conn.close()
 
         linearData = [(item[0], float(item[2]), float(item[4]))
                       for item in list]
@@ -260,12 +443,13 @@ def maintenance():
 #################################################################################
 @app.route('/crudeoil')
 def crudeoil():
-
     list = []
-    conn = None
+    list2 = []
+    global conn, conn2
 
     # linear regression training
     lr_crudeoil()
+
     # load images
     lr_crudeoil_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
                                              'lr_crudeoil_quarter_train.png')
@@ -276,23 +460,106 @@ def crudeoil():
     lr_crudeoil_tariff_test = os.path.join(app.config['UPLOAD_FOLDER'],
                                            'lr_crudeoil_tariff_test.png')
 
-    # Connect to postgresql Platform
-    try:
-        conn = psycopg2.connect(
-            host="ec2-54-173-77-184.compute-1.amazonaws.com",
-            database="d2v75ijfptfl5f",
-            user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
+    # mongo
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        templist = []
+        tariffList = []
+        pricePerBarrelList = []
+        mainCostList = []
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colMaintenance = db["maintenance"]
+        colTariff = db["tariff"]
+        colWeather = db["weather"]
 
-        print("Successfully connected", file=sys.stderr)
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({
+            'quarter': {
+                '$gt': '0'
+            },
+            'price_per_barrel': {
+                '$gt': '0'
+            }
+        })
+        for document in cursorCrudeOil:
+            pricePerBarrelList.append(float(document['price_per_barrel']))
+            quarterList.append(float(document['quarter']))
 
-    except Exception as error:
-        print("Error connecting to Postgres Platform: {}".format(error))
+        # cursor for temp
+        cursorTemp = colWeather.find({'temperature': {'$gt': '0'}})
+        for document in cursorTemp:
+            templist.append(float(document['temperature']))
 
-    # Get Cursor
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        # cursor for maintanence
+        cursorMain = colMaintenance.find({'cost': {'$gt': '0'}})
+        for document in cursorMain:
+            mainCostList.append(float(document['cost']))
+
+        for x in range(0, 21):
+            tuple = (quarterList[x], templist[x], tariffList[x],
+                     pricePerBarrelList[x], mainCostList[x])
+            list2.append(tuple)
+
+        linearData = [(item[0], float(item[1]), float(item[2]))
+                      for item in list2]
+        nonLinearData = [(item[0], float(item[1]), float(item[2]))
+                         for item in list2]
+
+        # Linear
+        l_labels = [row[0] for row in linearData]
+        # add years
+        for x in years:
+            l_labels.append(x)
+
+        l_crudePrice = [row[1] for row in linearData]
+        # add predicted crude oil
+        temp = []
+        for x in linearResultPredictedCrude:
+            temp.append(np.round(x, 2))
+        for x in temp:
+            l_crudePrice.append(x)
+
+        l_electricPrice = [row[2] for row in linearData]
+        # add predicted tariff
+        temp1 = []
+        for x in linearResultPredictedTarriffCrude:
+            temp1.append(np.round(x, 2))
+        for x in temp1:
+            l_electricPrice.append(x)
+
+        # Non Linear
+        nl_labels = [row[0] for row in nonLinearData]
+        nl_labels.append('2022.1')
+        nl_electricPrice = [row[1] for row in nonLinearData]
+        nl_crudePrice = [row[2] for row in nonLinearData]
+
+        return render_template(
+            "crudeoil.html",
+            l_labels=l_labels,
+            l_electricPrice=l_electricPrice,
+            l_crudePrice=l_crudePrice,
+            nl_labels=nl_labels,
+            nl_electricPrice=nl_electricPrice,
+            nl_crudePrice=nl_crudePrice,
+
+            # images
+            lr_crudeoil_quarter_train=lr_crudeoil_quarter_train,
+            lr_crudeoil_quarter_test=lr_crudeoil_quarter_test,
+            lr_crudeoil_tariff_train=lr_crudeoil_tariff_train,
+            lr_crudeoil_tariff_test=lr_crudeoil_tariff_test,
+        )
+
+    # postgres
     if conn is not None:
-
         # show linear and non linear
         cur = conn.cursor()
         cur.execute(
@@ -302,17 +569,11 @@ def crudeoil():
         for i in cur:
             list.append(i)
 
-        conn.close()
-
         linearData = [(item[0], float(item[2]), float(item[3]))
                       for item in list]
 
         nonLinearData = [(item[0], float(item[2]), float(item[3]))
                          for item in list]
-        # for i in data:
-        #     print(i, file=sys.stderr)
-
-        # Linear
 
         # Linear
         l_labels = [row[0] for row in linearData]
@@ -363,30 +624,51 @@ def crudeoil():
 ############################ Linear ML Functions ################################
 #################################################################################
 def lr_temperature():
-    # Connect to postgresql Platform
-    try:
-        conn = psycopg2.connect(
-            host="ec2-54-173-77-184.compute-1.amazonaws.com",
-            database="d2v75ijfptfl5f",
-            user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
-
-        print("Successfully connected", file=sys.stderr)
-
-    except Exception as error:
-        print("Error connecting to Postgres Platform: {}".format(error))
-
     data = []
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT w.quarter, w.temperature, t.tariff_per_kwh FROM weather w, tariff t WHERE w.quarter=t.quarter;"
-    )
 
-    for i in cur:
-        data.append(i)
+    if conn is not None:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT w.quarter, w.temperature, t.tariff_per_kwh FROM weather w, tariff t WHERE w.quarter=t.quarter;"
+        )
 
-    conn.close()
+        for i in cur:
+            data.append(i)
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        templist = []
+        tariffList = []
+
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colTariff = db["tariff"]
+        colWeather = db["weather"]
+
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({'quarter': {'$gt': '0'}})
+        for document in cursorCrudeOil:
+            quarterList.append(float(document['quarter']))
+
+        # cursor for temp
+        cursorTemp = colWeather.find({'temperature': {'$gt': '0'}})
+        for document in cursorTemp:
+            templist.append(float(document['temperature']))
+
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        for x in range(0, 21):
+            tuple = (
+                quarterList[x],
+                templist[x],
+                tariffList[x],
+            )
+            data.append(tuple)
 
     df = pd.DataFrame(data)
 
@@ -440,7 +722,6 @@ def lr_temperature():
     #     linearResultPredictedTemp.append(predictedTemp)
 
     linearResultPredictedTemp = y_predTemp.flatten()
-    print(linearResultPredictedTemp)
 
     # show training set
     plt.scatter(X_trainTemp, y_trainTemp, color='red')
@@ -509,30 +790,47 @@ def lr_temperature():
 
 
 def lr_maintenance():
-    # Connect to postgresql Platform
-    try:
-        conn = psycopg2.connect(
-            host="ec2-54-173-77-184.compute-1.amazonaws.com",
-            database="d2v75ijfptfl5f",
-            user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
-
-        print("Successfully connected", file=sys.stderr)
-
-    except Exception as error:
-        print("Error connecting to Postgres Platform: {}".format(error))
-
     data = []
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT m.quarter, m.cost, t.tariff_per_kwh FROM maintenance m, tariff t WHERE m.quarter=t.quarter;"
-    )
 
-    for i in cur:
-        data.append(i)
+    if conn is not None:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT m.quarter, m.cost, t.tariff_per_kwh FROM maintenance m, tariff t WHERE m.quarter=t.quarter;"
+        )
 
-    conn.close()
+        for i in cur:
+            data.append(i)
+
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        tariffList = []
+        mainCostList = []
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colMaintenance = db["maintenance"]
+        colTariff = db["tariff"]
+
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({'quarter': {'$gt': '0'}})
+        for document in cursorCrudeOil:
+            quarterList.append(float(document['quarter']))
+
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        # cursor for maintanence
+        cursorMain = colMaintenance.find({'cost': {'$gt': '0'}})
+        for document in cursorMain:
+            mainCostList.append(float(document['cost']))
+
+        for x in range(0, 21):
+            tuple = (quarterList[x], mainCostList[x], tariffList[x])
+            data.append(tuple)
 
     df = pd.DataFrame(data)
 
@@ -563,7 +861,7 @@ def lr_maintenance():
     regressorTariff = LinearRegression()
     regressorTariff.fit(X_trainTariff, y_trainTariff)
 
-    # Predict Temperature
+    # Predict Main
     # test data and see how accurately our algorithm predicts the percentage score.
     y_predTemp = regressorTemp.predict(X_testTemp)
     print('Mean Absolute Error:',
@@ -653,30 +951,50 @@ def lr_maintenance():
 
 
 def lr_crudeoil():
-    # Connect to postgresql Platform
-    try:
-        conn = psycopg2.connect(
-            host="ec2-54-173-77-184.compute-1.amazonaws.com",
-            database="d2v75ijfptfl5f",
-            user="jkbetvbzvsivpk",
-            password=
-            "3b79c1f6062e3164cb523ea49ade123ccc4d25a86f7fa9c7e2b42921d0f55831")
-
-        print("Successfully connected", file=sys.stderr)
-
-    except Exception as error:
-        print("Error connecting to Postgres Platform: {}".format(error))
-
     data = []
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT c.quarter, c.price_per_barrel, t.tariff_per_kwh FROM crudeoil c, tariff t WHERE c.quarter=t.quarter;"
-    )
 
-    for i in cur:
-        data.append(i)
+    if conn is not None:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT c.quarter, c.price_per_barrel, t.tariff_per_kwh FROM crudeoil c, tariff t WHERE c.quarter=t.quarter;"
+        )
 
-    conn.close()
+        for i in cur:
+            data.append(i)
+
+    if conn2 is not None:
+        # database
+        db = conn2["kenji2008"]
+        # list
+        quarterList = []
+        tariffList = []
+        pricePerBarrelList = []
+
+        # collection
+        colCrudeOil = db["crudeoil"]
+        colTariff = db["tariff"]
+
+        #cursor crude oil
+        cursorCrudeOil = colCrudeOil.find({
+            'quarter': {
+                '$gt': '0'
+            },
+            'price_per_barrel': {
+                '$gt': '0'
+            }
+        })
+        for document in cursorCrudeOil:
+            pricePerBarrelList.append(float(document['price_per_barrel']))
+            quarterList.append(float(document['quarter']))
+
+        # cursor for tariff
+        cursorTariff = colTariff.find({'tariff_per_kwh': {'$gt': '0'}})
+        for document in cursorTariff:
+            tariffList.append(float(document['tariff_per_kwh']))
+
+        for x in range(0, 21):
+            tuple = (quarterList[x], pricePerBarrelList[x], tariffList[x])
+            data.append(tuple)
 
     df = pd.DataFrame(data)
 
@@ -707,6 +1025,7 @@ def lr_crudeoil():
     regressorTariff = LinearRegression()
     regressorTariff.fit(X_trainTariff, y_trainTariff)
 
+    # Predict crude oil
     # test data and see how accurately our algorithm predicts the percentage score.
     y_predTemp = regressorTemp.predict(X_testTemp)
     print('Mean Absolute Error:',
