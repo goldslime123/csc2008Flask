@@ -22,6 +22,15 @@ from sklearn import metrics
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# tensorflow
+from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras.models import Sequential
+from tensorflow import keras
+from sklearn.metrics import mean_squared_error  
+
+# timer
+from timeit import default_timer as timer
+
 app = Flask(__name__, template_folder="Website")
 IS_DEV = app.env == 'development'
 
@@ -44,6 +53,17 @@ linearResultPredictedTarriffMain = []
 linearResultPredictedCrude = []
 linearResultPredictedTarriffCrude = []
 
+# Predict tariff based on temperature
+nlResultPredictedTemp = []
+nlResultPredictedTarriffTemp = []
+
+# Predict tariff based on maintenance
+nlResultPredictedMain = []
+nlResultPredictedTarriffMain = []
+
+# Predict tariff based on crudeoil
+nlResultPredictedCrude = []
+nlResultPredictedTarriffCrude = []
 # postgres
 conn = None
 # mongo
@@ -51,13 +71,13 @@ conn2 = None
 
 try:
     # Connect to postgresql Platform
-    # conn = psycopg2.connect(host=auth.host,
-    #                         database=auth.database,
-    #                         user=auth.user,
-    #                         password=auth.password)
+    conn = psycopg2.connect(host=auth.host,
+                            database=auth.database,
+                            user=auth.user,
+                            password=auth.password)
 
     # Connect to mongodb Platform
-    conn2 = MongoClient(auth.connMongo)
+    # conn2 = MongoClient(auth.connMongo)
 
 except Exception as error:
     print("Error connecting to Database Platform: {}".format(error))
@@ -85,6 +105,9 @@ def temperature():
     global conn, conn2
     # linear regression training
     lr_temperature()
+    nl_temperature1()
+
+
 
     # load images
     lr_temp_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
@@ -139,15 +162,17 @@ def temperature():
         for document in cursorMain:
             mainCostList.append(float(document['cost']))
 
-        for x in range(0, 21):
+        for x in range(0, 28):
             tuple = (quarterList[x], templist[x], tariffList[x],
                      pricePerBarrelList[x], mainCostList[x])
             list2.append(tuple)
 
         linearData = [(item[0], float(item[1]), float(item[2]))
                       for item in list2]
+                      
         nonLinearData = [(item[0], float(item[1]), float(item[2]))
                          for item in list2]
+        
 
         # Linear
         l_labels = [row[0] for row in linearData]
@@ -173,9 +198,24 @@ def temperature():
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
+        # add years
+        for x in years:
+            nl_labels.append(x)
         nl_temperature = [row[1] for row in nonLinearData]
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedTemp:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_temperature.append(x)
+
         nl_electricPrice = [row[2] for row in nonLinearData]
+         # add predicted tariff
+        nltemp1 = []
+        for x in nlResultPredictedTarriffTemp:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
 
         return render_template(
             "temperature.html",
@@ -211,6 +251,7 @@ def temperature():
         # for i in data:
         #     print(i, file=sys.stderr)
 
+
         # Linear
         l_labels = [row[0] for row in linearData]
         # add years
@@ -235,9 +276,24 @@ def temperature():
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
+        # add years
+        for x in years:
+            nl_labels.append(x)
         nl_temperature = [row[1] for row in nonLinearData]
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedTemp:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_temperature.append(x)
+
         nl_electricPrice = [row[2] for row in nonLinearData]
+         # add predicted tariff
+        nltemp1 = []
+        for x in nlResultPredictedTarriffTemp:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
 
         return render_template(
             "temperature.html",
@@ -266,6 +322,7 @@ def maintenance():
     global conn, conn2
     # linear regression training
     lr_maintenance()
+    nl_maintenance1()
 
     # load images
     lr_main_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
@@ -321,7 +378,7 @@ def maintenance():
         for document in cursorMain:
             mainCostList.append(float(document['cost']))
 
-        for x in range(0, 21):
+        for x in range(0, 28):
             tuple = (quarterList[x], templist[x], tariffList[x],
                      pricePerBarrelList[x], mainCostList[x])
             list2.append(tuple)
@@ -355,10 +412,27 @@ def maintenance():
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
         nl_electricPrice = [row[1] for row in nonLinearData]
         nl_maintenance = [row[2] for row in nonLinearData]
 
+        # add years
+        for x in years:
+            nl_labels.append(x)
+
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedMain:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_maintenance.append(x)
+
+        # add predicted temp
+        nltemp1 = []
+        for x in nlResultPredictedTarriffMain:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
+        
         return render_template(
             "maintenance.html",
             l_labels=l_labels,
@@ -418,9 +492,26 @@ def maintenance():
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
         nl_electricPrice = [row[1] for row in nonLinearData]
         nl_maintenance = [row[2] for row in nonLinearData]
+
+        # add years
+        for x in years:
+            nl_labels.append(x)
+
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedMain:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_maintenance.append(x)
+
+        # add predicted temp
+        nltemp1 = []
+        for x in nlResultPredictedTarriffMain:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
 
         return render_template(
             "maintenance.html",
@@ -449,6 +540,7 @@ def crudeoil():
 
     # linear regression training
     lr_crudeoil()
+    nl_crudeoil1()
 
     # load images
     lr_crudeoil_quarter_train = os.path.join(app.config['UPLOAD_FOLDER'],
@@ -504,7 +596,7 @@ def crudeoil():
         for document in cursorMain:
             mainCostList.append(float(document['cost']))
 
-        for x in range(0, 21):
+        for x in range(0, 28):
             tuple = (quarterList[x], templist[x], tariffList[x],
                      pricePerBarrelList[x], mainCostList[x])
             list2.append(tuple)
@@ -538,9 +630,26 @@ def crudeoil():
 
         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
         nl_electricPrice = [row[1] for row in nonLinearData]
         nl_crudePrice = [row[2] for row in nonLinearData]
+
+        # add years
+        for x in years:
+            nl_labels.append(x)
+
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedCrude:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_crudePrice.append(x)
+
+        # add predicted temp
+        nltemp1 = []
+        for x in nlResultPredictedTarriffCrude:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
 
         return render_template(
             "crudeoil.html",
@@ -597,11 +706,31 @@ def crudeoil():
         for x in temp1:
             l_electricPrice.append(x)
 
-        # Non Linear
+         # Non Linear
         nl_labels = [row[0] for row in nonLinearData]
-        nl_labels.append('2022.1')
         nl_electricPrice = [row[1] for row in nonLinearData]
         nl_crudePrice = [row[2] for row in nonLinearData]
+
+        # add years
+        for x in years:
+            nl_labels.append(x)
+
+        # add predicted temp
+        nltemp = []
+        for x in nlResultPredictedCrude:
+            nltemp.append(np.round(x, 2))
+        for x in nltemp:
+            nl_crudePrice.append(x)
+
+        # add predicted temp
+        nltemp1 = []
+        for x in nlResultPredictedTarriffCrude:
+            nltemp1.append(np.round(x, 2))
+        for x in nltemp1:
+            nl_electricPrice.append(x)
+
+    
+
 
         return render_template(
             "crudeoil.html",
@@ -624,6 +753,7 @@ def crudeoil():
 ############################ Linear ML Functions ################################
 #################################################################################
 def lr_temperature():
+    start = timer()
     data = []
 
     if conn is not None:
@@ -788,8 +918,12 @@ def lr_temperature():
     plt.savefig('../flaskUI/static/image/lr_temp_tariff_test.png')
     plt.close()
 
+    end = timer()
+    print("Time taken: " + str(end - start) + " seconds")
+
 
 def lr_maintenance():
+    start = timer()
     data = []
 
     if conn is not None:
@@ -949,8 +1083,12 @@ def lr_maintenance():
     plt.savefig('../flaskUI/static/image/lr_main_tariff_test.png')
     plt.close()
 
+    end = timer()
+    print("Time taken: " + str(end - start) + " seconds")
+
 
 def lr_crudeoil():
+    start = timer()
     data = []
 
     if conn is not None:
@@ -1110,6 +1248,322 @@ def lr_crudeoil():
     plt.ylabel('Tariff')
     plt.savefig('../flaskUI/static/image/lr_crudeoil_tariff_test.png')
     plt.close()
+    end = timer()
+    print("Time taken: " + str(end - start) + " seconds")
+
+
+def nl_temperature1():   
+    # import temperature data
+    data = pd.read_csv('temp/temperature.csv').values
+    data = np.delete(data, 0, 1)
+    # print(data)
+    n_steps = 4
+
+    # split a multivariate sequence into samples
+    def split_sequences(sequences, n_steps):
+        x, y = list(), list()
+        for i in range(len(sequences)):
+            # find the end of this pattern
+            end_ix = i + n_steps
+            # check if we are beyond the dataset
+            if end_ix > len(sequences)-1:
+                break
+            # gather input and output parts of the pattern
+            seq_x, seq_y = sequences[i:end_ix, :], sequences[end_ix, :]
+            x.append(seq_x)
+            y.append(seq_y)
+        return np.array(x), np.array(y)
+
+    # convert into input/output
+    x, y = split_sequences(data, n_steps)
+
+
+    # print(data[20:23])
+    # for i in range(len(x)):
+    #     print(x[i], y[i])
+    n_features = x.shape[2]
+    # X.shape
+    data.shape
+    # print(x.shape[2])
+
+    
+    model = Sequential()
+    model.add(LSTM(100, return_sequences=True, input_shape=(n_steps, n_features)))
+    model.add(LSTM(100))
+    model.add(Dense(n_features))
+    model.compile(optimizer='adam', loss='mse')
+
+    
+    # fit model
+    model.fit(x, y, epochs=1000, verbose=0)
+    # demonstrate prediction
+
+    
+    xinput = np.array([[27.37, 23.29], [28.77, 20.87],
+                    [28.73, 22.41], [28.13, 20.35]])
+    xinput = xinput.reshape((1, n_steps, n_features))
+    temp = model.predict(xinput, verbose=0)
+    # print(temp)
+
+
+
+    newModel = Sequential()
+    newModel.add(LSTM(100, return_sequences=True,
+                batch_input_shape=(1, 4, 2), stateful=True))
+    newModel.add(LSTM(100))
+    newModel.add(Dense(n_features))
+    newModel.compile(optimizer='adam', loss='mean_squared_error')
+    newModel.set_weights(model.get_weights())
+
+
+    newtemp = x[-1]
+    # print(newtemp)
+    pp = np.delete(newtemp, obj=[0, 0, 1])
+    pp = pp.flatten()
+    pp = np.append(pp, values=temp.flatten())
+    # print(pp)
+    pp.shape
+    pp = pp.reshape((1, n_steps, n_features))
+    # print(pp)
+
+    predict_the_future = newModel.predict(pp, verbose=0)
+
+    tt = np.copy(predict_the_future)
+    # print(tt)
+    for i in range(8):
+        pp = np.delete(newtemp, obj=[0, 0, 1])
+        pp = pp.flatten()
+        pp = np.append(pp, values=predict_the_future.flatten())
+        pp = pp.reshape((1, n_steps, n_features))
+        # print(pp)
+        predict_the_future = newModel.predict(pp, verbose=0)
+        tt = np.append(tt, predict_the_future)
+        # print(tt)
+        newModel.reset_states()
+
+    # tt = tt.flatten()
+    # print(tt)
+
+    temperature = list()
+    tariff = list()
+
+    for i in range(0,len(tt),2):
+        temperature.append(tt[i])
+        tariff.append(tt[i+1])
+    
+    # print(temperature)
+    global nlResultPredictedTemp,nlResultPredictedTarriffTemp
+    nlResultPredictedTemp = temperature
+
+    nlResultPredictedTarriffTemp = tariff
+    # print(tariff)
+
+def nl_crudeoil1():   
+    # import temperature data
+    data = pd.read_csv('temp/crudeoil.csv').values
+    data = np.delete(data, 0, 1)
+    # print(data)
+    n_steps = 4
+
+    # split a multivariate sequence into samples
+    def split_sequences(sequences, n_steps):
+        x, y = list(), list()
+        for i in range(len(sequences)):
+            # find the end of this pattern
+            end_ix = i + n_steps
+            # check if we are beyond the dataset
+            if end_ix > len(sequences)-1:
+                break
+            # gather input and output parts of the pattern
+            seq_x, seq_y = sequences[i:end_ix, :], sequences[end_ix, :]
+            x.append(seq_x)
+            y.append(seq_y)
+        return np.array(x), np.array(y)
+
+    # convert into input/output
+    x, y = split_sequences(data, n_steps)
+
+
+    # print(data[20:23])
+    # for i in range(len(x)):
+    #     print(x[i], y[i])
+    n_features = x.shape[2]
+    # X.shape
+    data.shape
+    # print(x.shape[2])
+
+    
+    model = Sequential()
+    model.add(LSTM(100, return_sequences=True, input_shape=(n_steps, n_features)))
+    model.add(LSTM(100))
+    model.add(Dense(n_features))
+    model.compile(optimizer='adam', loss='mse')
+
+    
+    # fit model
+    model.fit(x, y, epochs=1000, verbose=0)
+    # demonstrate prediction
+
+    
+    xinput = np.array([[27.37, 23.29], [28.77, 20.87],
+                    [28.73, 22.41], [28.13, 20.35]])
+    xinput = xinput.reshape((1, n_steps, n_features))
+    temp = model.predict(xinput, verbose=0)
+    # print(temp)
+
+
+
+    newModel = Sequential()
+    newModel.add(LSTM(100, return_sequences=True,
+                batch_input_shape=(1, 4, 2), stateful=True))
+    newModel.add(LSTM(100))
+    newModel.add(Dense(n_features))
+    newModel.compile(optimizer='adam', loss='mean_squared_error')
+    newModel.set_weights(model.get_weights())
+
+
+    newtemp = x[-1]
+    # print(newtemp)
+    pp = np.delete(newtemp, obj=[0, 0, 1])
+    pp = pp.flatten()
+    pp = np.append(pp, values=temp.flatten())
+    # print(pp)
+    pp.shape
+    pp = pp.reshape((1, n_steps, n_features))
+    # print(pp)
+
+    predict_the_future = newModel.predict(pp, verbose=0)
+
+    tt = np.copy(predict_the_future)
+    # print(tt)
+    for i in range(8):
+        pp = np.delete(newtemp, obj=[0, 0, 1])
+        pp = pp.flatten()
+        pp = np.append(pp, values=predict_the_future.flatten())
+        pp = pp.reshape((1, n_steps, n_features))
+        # print(pp)
+        predict_the_future = newModel.predict(pp, verbose=0)
+        tt = np.append(tt, predict_the_future)
+        # print(tt)
+        newModel.reset_states()
+
+    # tt = tt.flatten()
+    # print(tt)
+
+    temperature = list()
+    tariff = list()
+
+    for i in range(0,len(tt),2):
+        temperature.append(tt[i])
+        tariff.append(tt[i+1])
+    
+    # print(temperature)
+    global nlResultPredictedCrude,nlResultPredictedTarriffCrude
+    nlResultPredictedCrude = temperature
+    nlResultPredictedTarriffCrude = tariff
+
+
+def nl_maintenance1():   
+    # import temperature data
+    data = pd.read_csv('temp/maintenance.csv').values
+    data = np.delete(data, 0, 1)
+    # print(data)
+    n_steps = 4
+
+    # split a multivariate sequence into samples
+    def split_sequences(sequences, n_steps):
+        x, y = list(), list()
+        for i in range(len(sequences)):
+            # find the end of this pattern
+            end_ix = i + n_steps
+            # check if we are beyond the dataset
+            if end_ix > len(sequences)-1:
+                break
+            # gather input and output parts of the pattern
+            seq_x, seq_y = sequences[i:end_ix, :], sequences[end_ix, :]
+            x.append(seq_x)
+            y.append(seq_y)
+        return np.array(x), np.array(y)
+
+    # convert into input/output
+    x, y = split_sequences(data, n_steps)
+
+
+    # print(data[20:23])
+    # for i in range(len(x)):
+    #     print(x[i], y[i])
+    n_features = x.shape[2]
+    # X.shape
+    data.shape
+    # print(x.shape[2])
+
+    
+    model = Sequential()
+    model.add(LSTM(100, return_sequences=True, input_shape=(n_steps, n_features)))
+    model.add(LSTM(100))
+    model.add(Dense(n_features))
+    model.compile(optimizer='adam', loss='mse')
+
+    
+    # fit model
+    model.fit(x, y, epochs=1000, verbose=0)
+    # demonstrate prediction
+
+    
+    xinput = np.array([[27.37, 23.29], [28.77, 20.87],
+                    [28.73, 22.41], [28.13, 20.35]])
+    xinput = xinput.reshape((1, n_steps, n_features))
+    temp = model.predict(xinput, verbose=0)
+    # print(temp)
+
+    newModel = Sequential()
+    newModel.add(LSTM(100, return_sequences=True,
+                batch_input_shape=(1, 4, 2), stateful=True))
+    newModel.add(LSTM(100))
+    newModel.add(Dense(n_features))
+    newModel.compile(optimizer='adam', loss='mean_squared_error')
+    newModel.set_weights(model.get_weights())
+
+    newtemp = x[-1]
+    # print(newtemp)
+    pp = np.delete(newtemp, obj=[0, 0, 1])
+    pp = pp.flatten()
+    pp = np.append(pp, values=temp.flatten())
+    # print(pp)
+    pp.shape
+    pp = pp.reshape((1, n_steps, n_features))
+    # print(pp)
+
+    predict_the_future = newModel.predict(pp, verbose=0)
+
+    tt = np.copy(predict_the_future)
+    # print(tt)
+    for i in range(8):
+        pp = np.delete(newtemp, obj=[0, 0, 1])
+        pp = pp.flatten()
+        pp = np.append(pp, values=predict_the_future.flatten())
+        pp = pp.reshape((1, n_steps, n_features))
+        # print(pp)
+        predict_the_future = newModel.predict(pp, verbose=0)
+        tt = np.append(tt, predict_the_future)
+        # print(tt)
+        newModel.reset_states()
+
+    # tt = tt.flatten()
+    # print(tt)
+
+    temperature = list()
+    tariff = list()
+
+    for i in range(0,len(tt),2):
+        temperature.append(tt[i])
+        tariff.append(tt[i+1])
+    
+    # print(temperature)
+    global nlResultPredictedMain,nlResultPredictedTarriffMain
+    nlResultPredictedMain = temperature
+    nlResultPredictedTarriffMain = tariff
+
 
 
 if __name__ == 'main':
